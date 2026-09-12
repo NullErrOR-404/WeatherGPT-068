@@ -1,0 +1,36 @@
+{
+  "hotspots": [
+    {
+      "label": "AIChatService",
+      "risk": 0.683,
+      "type": "CLASS"
+    },
+    {
+      "label": "WeatherService",
+      "risk": 0.475,
+      "type": "CLASS"
+    },
+    {
+      "label": "._parse_open_meteo_response()",
+      "risk": 0.316,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "RulesEngine",
+      "risk": 0.309,
+      "type": "CLASS"
+    },
+    {
+      "label": "TelecomBridgeService",
+      "risk": 0.273,
+      "type": "CLASS"
+    }
+  ],
+  "blast_radius": {
+    "WeatherResponse": 20,
+    "ChatQuery": 20,
+    "MissedCallRequest": 20,
+    "IVROutboundResponse": 20,
+    "ChatResponse": 19
+  }
+}

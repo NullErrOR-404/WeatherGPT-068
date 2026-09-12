@@ -1,0 +1,59 @@
+{
+  "python.defaultInterpreterPath": "python",
+  "python.testing.pytestArgs": [
+    "backend/tests"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.typeCheckingMode": "basic",
+  
+  "graphify.graphPath": "graphify-out/graph.json",
+  "graphify.reportPath": "graphify-out/GRAPH_REPORT.md",
+  "graphify.autoRefresh": true,
+
+  "errorLens.enabled": true,
+  "errorLens.delay": 100,
+  "errorLens.fontSize": "12px",
+  "errorLens.messageTemplate": "[$source] $message",
+
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.wordWrap": "on"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "docker.showStartPage": false,
+  "docker.dockerComposePath": "docker-compose.yml",
+
+  "markdownlint.config": {
+    "MD013": false,
+    "MD033": false,
+    "MD024": false
+  },
+
+  "files.associations": {
+    "*.csv": "rainbow_csv"
+  },
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.git": false
+  }
+}

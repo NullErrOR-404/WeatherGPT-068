@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WeatherGPT | National Meteorological & Climate Intelligence</title>
+  <meta name="description" content="AI-Powered Conversational Meteorological Platform, Agro-Advisories, Early Disaster Warning & 2G Telephony Gateway.">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <!-- Offline Alert Banner -->
+  <div id="offline-bar" class="offline-banner hidden">
+    <span class="pulse-dot red"></span>
+    <span id="offline-text">OFFLINE MODE — Serving cached satellite advisory from local storage.</span>
+  </div>
+
+  <div class="app-layout">
+    <!-- Header -->
+    <header class="top-nav">
+      <div class="brand">
+        <div class="logo-shield">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>WeatherGPT <span class="badge sih-badge">SIH 2026</span></h1>
+          <p class="subtitle">MoES / IMD Unified Intelligence Grid</p>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <!-- Location Picker -->
+        <div class="select-wrapper">
+          <select id="location-select" aria-label="Select Region">
+            <option value="20.7453,78.6022" selected>Wardha, MH (Cotton Belt)</option>
+            <option value="25.5941,85.1376">Patna, BR (Gangetic Plains)</option>
+            <option value="20.4625,85.8828">Cuttack, OD (Coastal Delta)</option>
+            <option value="31.1048,77.1734">Shimla, HP (Himalayan Valley)</option>
+            <option value="19.0760,72.8777">Mumbai, MH (Konkan Coast)</option>
+            <option value="28.6139,77.2090">New Delhi (National Capital)</option>
+          </select>
+        </div>
+
+        <!-- Language Selector -->
+        <div class="select-wrapper">
+          <select id="lang-select" aria-label="Select Language">
+            <option value="en" selected>English</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+            <option value="mr">मराठी (Marathi)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="bn">বাংলা (Bengali)</option>
+          </select>
+        </div>
+
+        <button id="theme-toggle" class="icon-btn" title="Toggle Daylight High-Contrast Mode">
+          <span id="theme-icon">☀️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Zone 1: Disaster & Hazard Shield -->
+    <section class="safety-shield" id="safety-shield">
+      <div class="shield-header">
+        <div class="shield-badge" id="shield-badge">
+          <span class="pulse-dot green" id="shield-dot"></span>
+          <span id="shield-severity">NORMAL ADVISORY</span>
+        </div>
+        <div class="model-provenance" id="model-provenance">
+          GFS 0.25° NWP • Radar Nowcast 1.0km
+        </div>
+      </div>
+      <div class="shield-body">
+        <h2 id="shield-headline">Clear skies across district. Favorable conditions for field operations.</h2>
+        <p id="shield-detail">No active CAP warning in the 50km radius. Precipitation likelihood &lt; 5% over next 6 hours.</p>
+      </div>
+      <div class="shield-stats">
+        <div class="stat-pill">
+          <span class="label">Temperature</span>
+          <span class="value" id="current-temp">--°C</span>
+        </div>
+        <div class="stat-pill">
+          <span class="label">Humidity</span>
+          <span class="value" id="current-humidity">--%</span>
+        </div>
+        <div class="stat-pill">
+          <span class="label">Wind Speed</span>
+          <span class="value" id="current-wind">-- km/h</span>
+        </div>
+        <div class="stat-pill">
+          <span class="label">Cloud Cover</span>
+          <span class="value" id="current-clouds">--%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Grid: Action Horizon Modules -->
+    <main class="dashboard-grid">
+      <!-- Card 1: Precision Agro-Met Decision -->
+      <article class="action-card" id="card-agro">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">🌾</span>
+            <div>
+              <h3>Agro-Met Precision Spray</h3>
+              <p class="card-sub">ICAR Wash-Off &amp; Drift Model</p>
+            </div>
+          </div>
+          <span class="status-tag safe" id="spray-status-tag">SAFE</span>
+        </div>
+        <div class="card-body">
+          <p id="spray-verdict-text">Favorable for spray operations. Wind speeds are optimal with zero 2-hour rain risk.</p>
+          <div class="metric-meter">
+            <div class="meter-bar">
+              <div class="meter-fill safe-fill" id="wash-meter-fill" style="width: 10%;"></div>
+            </div>
+            <div class="meter-labels">
+              <span>Wash-off Probability: <strong id="wash-off-pct">8%</strong></span>
+              <span>Wind: <strong id="spray-wind">8 km/h</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="action-btn text-btn" id="btn-show-agro-details">View ICAR Advisory</button>
+        </div>
+      </article>
+
+      <!-- Card 2: APMC Mandi Grain Shield -->
+      <article class="action-card" id="card-mandi">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">🏬</span>
+            <div>
+              <h3>APMC Mandi Grain Shield</h3>
+              <p class="card-sub">Open-Air Yard Cloudburst Monitor</p>
+            </div>
+          </div>
+          <span class="status-tag safe" id="mandi-status-tag">DRY</span>
+        </div>
+        <div class="card-body">
+          <p id="mandi-report-text">APMC yards operating safely. Cloudburst hazard below trigger threshold.</p>
+          <div class="metric-meter">
+            <div class="meter-bar">
+              <div class="meter-fill safe-fill" id="tarpaulin-meter-fill" style="width: 15%;"></div>
+            </div>
+            <div class="meter-labels">
+              <span>Tarpaulin Urgency: <strong id="tarpaulin-urgency">15/100</strong></span>
+              <span>Drainage Capacity: <strong>Adequate</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="action-btn text-btn" id="btn-mandi-refresh">Refresh Mandi Radar</button>
+        </div>
+      </article>
+
+      <!-- Card 3: Preemptive Flood Detour Navigator -->
+      <article class="action-card" id="card-flood">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">🌊</span>
+            <div>
+              <h3>Flood &amp; Underpass Detour</h3>
+              <p class="card-sub">Hydro-Topographic Inundation</p>
+            </div>
+          </div>
+          <span class="status-tag safe" id="flood-status-tag">PASSABLE</span>
+        </div>
+        <div class="card-body">
+          <p id="flood-report-text">Railway underpasses and low-lying arterial bridges clear. Surface runoff normal.</p>
+          <div class="detour-badge" id="detour-badge" style="display: none;">
+            <span>⚠️ Bypass Active: Ring Road High-Elevation Route</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="action-btn text-btn" id="btn-check-flood-route">Simulate Heavy Runoff</button>
+        </div>
+      </article>
+
+      <!-- Card 4: 2G Button-Phone Telephony Gateway -->
+      <article class="action-card" id="card-ivr">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">📞</span>
+            <div>
+              <h3>2G Rural Telephony Bridge</h3>
+              <p class="card-sub">Zero-Internet Missed Call &amp; SMS</p>
+            </div>
+          </div>
+          <span class="status-tag active">ACTIVE</span>
+        </div>
+        <div class="card-body">
+          <p>Toll-free missed-call hotline <strong>1800-MET-TALK</strong>. Triggers synthetic voice callback in regional dialect.</p>
+          <div class="sms-preview-box">
+            <div class="sms-header">
+              <span>GSM 03.38 160-Char Payload</span>
+              <button class="copy-btn" id="copy-sms-btn" title="Copy SMS string">Copy</button>
+            </div>
+            <pre id="sms-preview-text">WeatherGPT: Wardha 20.74N. Clear. Temp 31C. Spray: SAFE. No rain next 12h. Heat stress: LOW. Helpln: 1800-MET-TALK</pre>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="action-btn highlight-btn" id="btn-simulate-call">Simulate Missed Call</button>
+        </div>
+      </article>
+
+      <!-- Card 5: Mausam Rakshak Citizen Ground Truth -->
+      <article class="action-card" id="card-citizen">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">🛡️</span>
+            <div>
+              <h3>Mausam Rakshak Ground Truth</h3>
+              <p class="card-sub">Crowdsourced Radar-Blindspot Radar</p>
+            </div>
+          </div>
+          <span class="status-tag verified">ANTI-FAKE</span>
+        </div>
+        <div class="card-body">
+          <p>Overcomes Doppler radar topography blind spots via 1-tap geo-tagged citizen reports with satellite cloud-top verification.</p>
+          <div class="report-chips">
+            <button class="hazard-chip" data-type="HAIL">🧊 Hailstorm</button>
+            <button class="hazard-chip" data-type="WATERLOGGING">🌊 Waterlogged Underpass</button>
+            <button class="hazard-chip" data-type="HIGH_WINDS">💨 Tree/Wire Fall</button>
+            <button class="hazard-chip" data-type="DENSE_FOG">🌫️ Zero Visibility</button>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span id="hazard-report-status" class="sub-meta">3 verified pins active in sector</span>
+        </div>
+      </article>
+
+      <!-- Card 6: 40-Year Climate Reanalysis -->
+      <article class="action-card" id="card-climate">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-icon">📈</span>
+            <div>
+              <h3>40-Year Climate Benchmark</h3>
+              <p class="card-sub">ECMWF ERA5 Baseline Anomaly</p>
+            </div>
+          </div>
+          <span class="status-tag neutral" id="climate-anomaly-tag">NORMAL</span>
+        </div>
+        <div class="card-body">
+          <p id="climate-summary-text">Cumulative 10-day rainfall is within +4% of the 1991-2020 ERA5 meteorological normal.</p>
+          <div class="climate-bars">
+            <div class="climate-bar-item">
+              <span>Historical Normal: <strong id="hist-normal">42 mm</strong></span>
+            </div>
+            <div class="climate-bar-item">
+              <span>Current Observed: <strong id="current-observed">44 mm</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="action-btn text-btn" id="btn-climate-detail">Examine 30-Yr Trend</button>
+        </div>
+      </article>
+    </main>
+
+    <!-- Zone 3: Conversational AI Intelligence (Drawer / Full-width) -->
+    <section class="chat-section">
+      <div class="chat-header">
+        <div class="chat-title">
+          <span class="sparkle">✨</span>
+          <h3>Bhashini Weather Intelligence Chat</h3>
+          <span class="cache-badge" id="cache-badge" title="Geohash 5km Deduplication Status">CACHE READY</span>
+        </div>
+        <div class="chat-actions">
+          <button id="tts-toggle-btn" class="toggle-btn" title="Toggle Indic Voice Readout">
+            <span id="tts-icon">🔊 Voice Readout: ON</span>
+          </button>
+          <button id="clear-chat-btn" class="icon-btn" title="Clear Chat History">🗑️</button>
+        </div>
+      </div>
+
+      <!-- Suggested Starter Prompts -->
+      <div class="chat-chips-scroll">
+        <button class="prompt-chip" data-prompt="Is it safe to spray chemical pesticide on my cotton crop today?">🌾 Spray Safety for Cotton?</button>
+        <button class="prompt-chip" data-prompt="Will the APMC grain yard get hit by rain in the next 3 hours?">🏬 Mandi Tarpaulin Alert?</button>
+        <button class="prompt-chip" data-prompt="Are the low-lying railway underpasses flooded right now?">🌊 Road Underpass Detours?</button>
+        <button class="prompt-chip" data-prompt="How does this week's rainfall compare to 40-year ERA5 history?">📈 40-Year Climate Anomaly?</button>
+        <button class="prompt-chip" data-prompt="Generate a 160-char SMS weather advisory in Hindi for button phones.">📞 2G Button-Phone SMS?</button>
+      </div>
+
+      <!-- Chat Messages Container -->
+      <div class="chat-messages" id="chat-messages">
+        <!-- Assistant Welcome Message -->
+        <div class="message assistant-message">
+          <div class="message-avatar">⚡</div>
+          <div class="message-content">
+            <div class="message-bubble">
+              <p><strong>Namaste!</strong> I am <strong>WeatherGPT</strong>, your unified MoES/IMD conversational meteorological assistant.</p>
+              <p>Ask me about live forecasts, agro-met spray windows, APMC Mandi rain safety, flood detours, or 40-year ERA5 climate reanalysis in your regional language.</p>
+            </div>
+            <div class="message-meta">
+              <span class="provenance-tag">Grounded in GFS 0.25° &bull; IMD Radar Grid</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="chat-input-bar">
+        <button id="mic-btn" class="mic-button" title="Speak in Hindi/English/Regional" aria-label="Microphone">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <textarea id="chat-textarea" placeholder="Ask in any language... e.g. क्या आज कपास में कीटनाशक छिड़काव कर सकते हैं?" rows="1"></textarea>
+        <button id="send-btn" class="send-button" title="Send Query" aria-label="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Missed Call Modal Simulator -->
+  <div class="modal-overlay" id="ivr-modal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>2G Button-Phone IVR Simulator</h3>
+        <button class="close-modal-btn" id="close-ivr-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Simulates a rural farmer calling <strong>1800-MET-TALK</strong> with zero internet on a basic feature phone.</p>
+        <div class="phone-display">
+          <div class="phone-screen">
+            <div class="call-status">INCOMING CALL...</div>
+            <div class="call-number">WeatherGPT Kisan Vani</div>
+            <div class="call-audio-indicator">
+              <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span>
+            </div>
+            <div class="synthetic-voice-text" id="ivr-voice-script">
+              "Kisan bhaiyo, Wardha me agle 12 ghante me barish ki sambhavna 8% hai. Keetnashak chhidkav surakshit hai."
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="action-btn highlight-btn" id="btn-play-ivr-audio">Play Audio Stream</button>
+          <button class="action-btn text-btn" id="btn-close-ivr">Hang Up</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
