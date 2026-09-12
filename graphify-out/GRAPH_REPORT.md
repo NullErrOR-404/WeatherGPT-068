@@ -1,7 +1,7 @@
 # Graph Report - C:\WeatherGPT-068  (2026-09-12)
 
 ## Corpus Check
-- 19 files · ~47,733 words
+- 19 files · ~48,779 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary

@@ -23,6 +23,9 @@ class MausamRakshakService:
         report_id = f"RAK-{uuid.uuid4().hex[:6].upper()}"
         now = time.time()
 
+        # Defensive memory hygiene: prune stale pending reports older than 1 hour
+        self._pending_reports = [r for r in self._pending_reports if (now - r["timestamp"]) <= 3600]
+
         report_entry = {
             "id": report_id,
             "hazard": report.hazard_type.upper(),
@@ -34,7 +37,8 @@ class MausamRakshakService:
         }
         self._pending_reports.append(report_entry)
 
-        # Layer 1: Spatial Consensus Check (K >= 3 reports in 2km within 15 min)
+        # Layer 1: Spatial Consensus Check (K >= 2 UNIQUE users in ~2km within 15 min)
+        # Defense against Sybil attack: count distinct user_ids
         nearby_reports = [
             r
             for r in self._pending_reports
@@ -43,7 +47,8 @@ class MausamRakshakService:
             and (abs(r["lat"] - report.latitude) < 0.02)
             and (abs(r["lon"] - report.longitude) < 0.02)
         ]
-        consensus_count = len(nearby_reports)
+        unique_user_ids = set(r["user_id"] for r in nearby_reports)
+        consensus_count = len(unique_user_ids)
 
         # Layer 2: Satellite Physics Simulation Check
         # For convective storm hazards (HAIL, LIGHTNING, SQUALL), cloud top must be cold
@@ -56,7 +61,7 @@ class MausamRakshakService:
             simulated_cape = 650.0
             physics_passed = True
 
-        # Layer 3: Evaluation
+        # Layer 3: Evaluation (Requires multi-user consensus and thermodynamic satellite check)
         if consensus_count >= 2 and physics_passed:
             status = "VERIFIED"
             user_score = min(100, user_score + 5)

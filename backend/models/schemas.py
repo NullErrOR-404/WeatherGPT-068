@@ -71,10 +71,10 @@ class DisasterAlert(BaseModel):
 
 
 class ChatQuery(BaseModel):
-    message: str = Field(..., description="User voice or text prompt")
-    latitude: float = Field(default=20.7453, description="User latitude")
-    longitude: float = Field(default=78.6022, description="User longitude")
-    language: str = Field(default="hi", description="Language code (hi, mr, te, ta, bn, en)")
+    message: str = Field(..., max_length=1000, description="User voice or text prompt (capped at 1000 chars)")
+    latitude: float = Field(default=20.7453, ge=-90.0, le=90.0, description="User latitude (-90 to 90)")
+    longitude: float = Field(default=78.6022, ge=-180.0, le=180.0, description="User longitude (-180 to 180)")
+    language: str = Field(default="hi", max_length=10, description="Language code (hi, mr, te, ta, bn, en)")
     user_persona: Optional[str] = Field(default="auto", description="kisan, citizen, disaster, marine, or auto")
 
 
@@ -93,11 +93,11 @@ class ChatResponse(BaseModel):
 class CitizenHazardReport(BaseModel):
     hazard_type: str = Field(..., description="HAIL, WATERLOGGING, LIGHTNING, SQUALL, FOG")
     severity: str = Field(..., description="e.g. PEA_SIZE, GOLF_BALL, KNEE_DEEP, TREE_DOWN")
-    latitude: float
-    longitude: float
-    user_id: str
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    user_id: str = Field(..., max_length=100)
     timestamp: str
-    notes: Optional[str] = None
+    notes: Optional[str] = Field(default=None, max_length=500)
 
 
 class AntiFakeValidationResult(BaseModel):
@@ -113,10 +113,10 @@ class AntiFakeValidationResult(BaseModel):
 
 
 class MissedCallRequest(BaseModel):
-    phone_number: str
-    latitude: Optional[float] = 20.7453
-    longitude: Optional[float] = 78.6022
-    language: Optional[str] = "mr"
+    phone_number: str = Field(..., max_length=20)
+    latitude: Optional[float] = Field(default=20.7453, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(default=78.6022, ge=-180.0, le=180.0)
+    language: Optional[str] = Field(default="mr", max_length=10)
 
 
 class IVROutboundResponse(BaseModel):

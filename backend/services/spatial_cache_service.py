@@ -5,6 +5,7 @@ Implements 5km x 5km Geohash-6 spatial clustering to eliminate 98% of redundant 
 
 import time
 import hashlib
+from collections import OrderedDict
 from typing import Dict, Any, Optional
 
 # Base32 encoding alphabet for Geohash
@@ -12,7 +13,11 @@ BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
 
 def encode_geohash(lat: float, lon: float, precision: int = 6) -> str:
-    """Encodes latitude/longitude into a geohash string."""
+    """Encodes latitude/longitude into a geohash string with defensive coordinate bounds."""
+    # Defensive boundary clamping
+    clamped_lat = max(-90.0, min(90.0, float(lat)))
+    clamped_lon = max(-180.0, min(180.0, float(lon)))
+
     lat_interval = [-90.0, 90.0]
     lon_interval = [-180.0, 180.0]
     geohash = []
@@ -24,14 +29,14 @@ def encode_geohash(lat: float, lon: float, precision: int = 6) -> str:
     while len(geohash) < precision:
         if even:
             mid = (lon_interval[0] + lon_interval[1]) / 2
-            if lon > mid:
+            if clamped_lon > mid:
                 ch |= bits[bit]
                 lon_interval[0] = mid
             else:
                 lon_interval[1] = mid
         else:
             mid = (lat_interval[0] + lat_interval[1]) / 2
-            if lat > mid:
+            if clamped_lat > mid:
                 ch |= bits[bit]
                 lat_interval[0] = mid
             else:
@@ -51,7 +56,7 @@ class SpatialCacheService:
     def __init__(self, ttl_seconds: int = 900, max_size: int = 20000):
         self.ttl_seconds = ttl_seconds
         self.max_size = max_size
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: OrderedDict[str, Dict[str, Any]] = OrderedDict()
         self.stats = {"hits": 0, "misses": 0, "saved_llm_calls": 0}
 
     def _generate_key(self, lat: float, lon: float, intent: str, entity: str, language: str) -> str:
@@ -74,18 +79,22 @@ class SpatialCacheService:
             self.stats["misses"] += 1
             return None
 
+        # Move to end for LRU recency
+        self._cache.move_to_end(key)
         self.stats["hits"] += 1
         self.stats["saved_llm_calls"] += 1
         return entry["data"]
 
     def set(self, lat: float, lon: float, intent: str, entity: str, language: str, data: Dict[str, Any]) -> str:
-        if len(self._cache) >= self.max_size:
-            # Evict oldest entry
-            oldest_key = min(self._cache, key=lambda k: self._cache[k]["created_at"])
-            del self._cache[oldest_key]
-
         key = self._generate_key(lat, lon, intent, entity, language)
         cluster_id = encode_geohash(lat, lon, precision=6)
+
+        if key in self._cache:
+            self._cache.move_to_end(key)
+        elif len(self._cache) >= self.max_size:
+            # O(1) FIFO/LRU eviction of oldest item without scanning entire dictionary
+            self._cache.popitem(last=False)
+
         self._cache[key] = {
             "data": data,
             "created_at": time.time(),

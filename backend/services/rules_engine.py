@@ -61,17 +61,21 @@ class RulesEngine:
     def calculate_wbgt_heat_stress(self, temp_c: float, humidity_pct: float) -> Dict[str, Any]:
         """
         Calculates simplified Wet-Bulb Globe Temperature (WBGT) for outdoor labor safety.
+        Hardened against extreme dry arid conditions (RH < 1.67%) and negative temperatures.
         WBGT > 31°C: Extreme Heat Stress (Mandatory 15-min rest every 45 mins).
         """
-        # Stull formula approximation for wet-bulb temperature Tw
-        tw = (
-            temp_c * 0.151977 * ((humidity_pct + 8.313659) ** 0.5)
-            + (temp_c + humidity_pct) ** 0.5
-            - ((humidity_pct - 1.676331) ** 0.5)
-            + 0.00391838 * (humidity_pct ** 1.5) * (0.023101 * temp_c)
-            - 4.686035
-        )
-        wbgt = 0.7 * tw + 0.3 * temp_c
+        # Defensively clamp relative humidity to valid meteorological range [0.0, 100.0]
+        rh = max(0.0, min(100.0, float(humidity_pct)))
+        tc = float(temp_c)
+
+        # Stull (2011) formula approximation for wet-bulb temperature Tw with safe radicand guards
+        term1 = (max(0.0, rh + 8.313659)) ** 0.5
+        term2 = (max(0.0, tc + rh)) ** 0.5
+        term3 = (max(0.0, rh - 1.676331)) ** 0.5
+        term4 = 0.00391838 * (rh ** 1.5) * (0.023101 * tc)
+
+        tw = tc * 0.151977 * term1 + term2 - term3 + term4 - 4.686035
+        wbgt = 0.7 * tw + 0.3 * tc
 
         if wbgt >= 32.0:
             level = "EXTREME_DANGER"

@@ -35,12 +35,14 @@ app = FastAPI(
     version="1.1.0",
 )
 
-# Enable CORS for universal mobile and web clients
+# Secure CORS configuration
+cors_origins_env = os.getenv("CORS_ORIGINS", "*").strip()
+cors_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=False if cors_origins == ["*"] else True,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -59,8 +61,8 @@ async def health_check():
 
 @app.get("/api/weather/current", response_model=WeatherResponse)
 async def get_current_weather(
-    lat: float = Query(20.7453, description="Latitude"),
-    lon: float = Query(78.6022, description="Longitude"),
+    lat: float = Query(20.7453, ge=-90.0, le=90.0, description="Latitude (-90 to 90)"),
+    lon: float = Query(78.6022, ge=-180.0, le=180.0, description="Longitude (-180 to 180)"),
 ):
     """Retrieves live NWP atmospheric physics metrics and 3-hour nowcast slider."""
     return await weather_service.get_forecast(lat, lon)
@@ -74,8 +76,8 @@ async def chat_interaction(query: ChatQuery):
 
 @app.get("/api/alerts/active")
 async def get_active_alerts(
-    lat: float = Query(20.7453, description="Latitude"),
-    lon: float = Query(78.6022, description="Longitude"),
+    lat: float = Query(20.7453, ge=-90.0, le=90.0, description="Latitude (-90 to 90)"),
+    lon: float = Query(78.6022, ge=-180.0, le=180.0, description="Longitude (-180 to 180)"),
 ):
     """Retrieves active NDMA CAP alerts and Damini lightning vectors."""
     weather = await weather_service.get_forecast(lat, lon)
@@ -116,8 +118,8 @@ async def get_active_alerts(
 
 @app.get("/api/climate/compare")
 async def get_climate_trend(
-    lat: float = Query(20.7453, description="Latitude"),
-    lon: float = Query(78.6022, description="Longitude"),
+    lat: float = Query(20.7453, ge=-90.0, le=90.0, description="Latitude (-90 to 90)"),
+    lon: float = Query(78.6022, ge=-180.0, le=180.0, description="Longitude (-180 to 180)"),
 ):
     """Compares current conditions against 40-year ERA5 historical normal."""
     return await climate_service.get_climate_comparison(lat, lon)
@@ -131,8 +133,8 @@ async def trigger_missed_call(req: MissedCallRequest):
 
 @app.get("/api/telecom/sms-payload")
 async def get_compressed_sms(
-    lat: float = Query(20.7453, description="Latitude"),
-    lon: float = Query(78.6022, description="Longitude"),
+    lat: float = Query(20.7453, ge=-90.0, le=90.0, description="Latitude (-90 to 90)"),
+    lon: float = Query(78.6022, ge=-180.0, le=180.0, description="Longitude (-180 to 180)"),
 ):
     """Generates 160-character compressed GSM 03.38 payload for total data blackouts."""
     return await telecom_bridge.get_emergency_sms_payload(lat, lon)
@@ -140,15 +142,15 @@ async def get_compressed_sms(
 
 @app.get("/api/flood/detour", response_model=FloodDetourRoute)
 async def get_flood_detour(
-    lat: float = Query(20.7453, description="Latitude"),
-    lon: float = Query(78.6022, description="Longitude"),
+    lat: float = Query(20.7453, ge=-90.0, le=90.0, description="Latitude (-90 to 90)"),
+    lon: float = Query(78.6022, ge=-180.0, le=180.0, description="Longitude (-180 to 180)"),
 ):
     """Preemptive underpass waterlogging prediction and high-elevation bypass."""
     return await flood_routing_service.get_detour_advisory(lat, lon)
 
 
 @app.get("/api/mandi/status", response_model=MandiRainShieldReport)
-async def get_mandi_status(mandi_id: str = "mandi_01"):
+async def get_mandi_status(mandi_id: str = Query("mandi_01", max_length=50)):
     """Monitors open-air grain yard cloudburst risk."""
     return await mandi_shield_service.check_mandi_risk(mandi_id)
 
@@ -173,8 +175,8 @@ async def submit_citizen_report(report: CitizenHazardReport):
 
 @app.get("/api/rakshak/verified")
 async def get_verified_ground_pins(
-    lat: float = Query(20.7453, description="Latitude"),
-    lon: float = Query(78.6022, description="Longitude"),
+    lat: float = Query(20.7453, ge=-90.0, le=90.0, description="Latitude (-90 to 90)"),
+    lon: float = Query(78.6022, ge=-180.0, le=180.0, description="Longitude (-180 to 180)"),
 ):
     """Retrieves active verified ground-truth pins for map rendering."""
     return mausam_rakshak_service.get_verified_pins(lat, lon)
@@ -194,7 +196,9 @@ async def websocket_alerts_endpoint(websocket: WebSocket):
         while True:
             # Keep-alive heartbeat listener
             await websocket.receive_text()
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
+        pass
+    finally:
         wis2_service.disconnect(websocket)
 
 
