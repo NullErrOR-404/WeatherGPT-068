@@ -12,6 +12,11 @@
   "graphify.reportPath": "graphify-out/GRAPH_REPORT.md",
   "graphify.autoRefresh": true,
 
+  "coderabbit.autoReviewMode": "auto",
+  "coderabbit.agentType": "Native",
+  "coderabbit.autoStartTask": true,
+  "coderabbit.region": "us",
+
   "errorLens.enabled": true,
   "errorLens.delay": 100,
   "errorLens.fontSize": "12px",

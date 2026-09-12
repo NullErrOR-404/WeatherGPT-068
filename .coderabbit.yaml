@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit Configuration for WeatherGPT (MoES / IMD - SIH 2026)
+
+language: "en-US"
+tone_instructions: >
+  You are an expert meteorological software architect, security auditor, and 
+  systems engineer reviewing WeatherGPT — a mission-critical early warning and 
+  agro-climate platform. Emphasize:
+  1. Scientific validity & zero-hallucination guarantees in weather/agro formulas.
+  2. Security & defensive programming (rate limiting, input sanitization, API key leak prevention).
+  3. High-concurrency resilience (spatial cache memory bounds, WebSocket connection leaks).
+  4. 2G rural telephony & low-bandwidth edge cases (GSM 03.38 SMS 160-char compliance).
+  5. PWA offline reliability on budget devices (2GB RAM).
+
+early_access: true
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+      - "master"
+      
+  path_filters:
+    - "!graphify-out/**"
+    - "!**/*.pyc"
+    - "!**/.pytest_cache/**"
+    - "!**/.git/**"
+    - "!docs/RELATIONSHIPS_GRAPH.md"
+
+  path_instructions:
+    - path: "backend/services/rules_engine.py"
+      instructions: "Verify deterministic mathematical safety margins for ICAR wash-off and Stull WBGT calculations. Ensure no floating-point divide-by-zero or NaN states."
+    - path: "backend/services/spatial_cache_service.py"
+      instructions: "Verify geohash precision-6 boundaries (approx 1.2km x 0.6km to 5km sector) and memory eviction logic to prevent memory leaks under massive concurrency."
+    - path: "backend/services/telecom_bridge.py"
+      instructions: "Enforce strict GSM 03.38 character budget (strictly <= 160 characters). Ensure regional vernacular scripts are phonetically sound for TTS."
+    - path: "backend/services/mausam_rakshak_service.py"
+      instructions: "Validate 3-tier anti-fake verification logic: ensure rogue or poisoned GPS reports cannot trigger unauthorized civil disaster alerts."
+    - path: "backend/main.py"
+      instructions: "Check CORS policies, WebSocket exception handling on client disconnects, and async route performance."
+    - path: "frontend/**"
+      instructions: "Ensure 60 FPS rendering on 2GB RAM budget mobile devices, proper Service Worker offline fallbacks, and semantic HTML accessibility."
+
+  tools:
+    ast-grep:
+      enabled: true
+    ruff:
+      enabled: true
+    shellcheck:
+      enabled: true
+    markdownlint:
+      enabled: true
