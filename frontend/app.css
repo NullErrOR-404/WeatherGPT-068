@@ -487,6 +487,72 @@ button {
     color: var(--color-brand-blue);
   }
 
+  .sat-wind-toggle.active {
+    background-color: #ECFDF5;
+    border-color: #10B981;
+    color: #065F46;
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Rotating Wind Arrow Compass Marker (Step 2) */
+  .wind-compass-marker {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wind-airflow-pulse {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(16, 185, 129, 0.6);
+    background: rgba(16, 185, 129, 0.12);
+    animation: airflowWave 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+    pointer-events: none;
+  }
+
+  @keyframes airflowWave {
+    0% { transform: scale(0.5); opacity: 0.9; }
+    70% { opacity: 0.3; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  .wind-arrow-rotor {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
+  }
+
+  .wind-arrow-blade {
+    position: absolute;
+    top: 2px;
+    left: calc(50% - 6px);
+    width: 12px;
+    height: 18px;
+    color: #0066FF;
+    filter: drop-shadow(0 2px 4px rgba(0, 102, 255, 0.4));
+  }
+
+  .wind-center-pin {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    background-color: #0066FF;
+    border: 3px solid #FFFFFF;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(0, 102, 255, 0.8);
+    z-index: 5;
+  }
+
   .sat-opacity-control {
     display: flex;
     align-items: center;

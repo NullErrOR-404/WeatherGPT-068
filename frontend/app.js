@@ -27,6 +27,9 @@
     radarPlayTimer: null,
     speechSynthUtterance: null,
     recognition: null,
+    isWindVectorActive: true,
+    windDirectionDeg: 135,
+    windSpeedKm: 12,
   };
 
   // Maps
@@ -74,6 +77,7 @@
     initLocationAndRoleSelectors();
     initMaps();
     initSatelliteInspector();
+    initWindVectorControls();
     initAutoRefreshTimer();
     initChatCopilot();
     initUSSDSimulator();
@@ -172,6 +176,78 @@
   }
 
   // ---------------------------------------------------------------------------
+  // 3b. Real-time Rotating Wind Arrow Compass & Airflow Vector (Step 2)
+  // ---------------------------------------------------------------------------
+  function createWindMarkerIcon(deg = 135, speed = 12) {
+    if (!state.isWindVectorActive) {
+      return L.divIcon({
+        className: 'gps-pulse-marker',
+        html: '<div style="width:14px;height:14px;background:#0066FF;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 10px #0066FF;"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+    }
+
+    return L.divIcon({
+      className: 'wind-compass-div-icon',
+      html: `
+        <div class="wind-compass-marker" title="Live Surface Wind: ${speed} km/h from ${Math.round(deg)}°">
+          <div class="wind-airflow-pulse"></div>
+          <div class="wind-arrow-rotor" style="transform: rotate(${deg}deg);">
+            <svg class="wind-arrow-blade" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L19 21L12 17L5 21L12 2Z"/>
+            </svg>
+          </div>
+          <div class="wind-center-pin"></div>
+        </div>
+      `,
+      iconSize: [64, 64],
+      iconAnchor: [32, 32],
+    });
+  }
+
+  function updateWindVectorMarkers(deg = state.windDirectionDeg, speed = state.windSpeedKm) {
+    state.windDirectionDeg = deg;
+    state.windSpeedKm = speed;
+    const icon = createWindMarkerIcon(deg, speed);
+
+    if (desktopLocationMarker) {
+      desktopLocationMarker.setIcon(icon);
+      desktopLocationMarker.bindPopup(`<strong>${state.city}</strong><br>💨 Live Surface Wind: ${speed} km/h @ ${Math.round(deg)}°`);
+    }
+    if (fullLocationMarker) {
+      fullLocationMarker.setIcon(icon);
+      fullLocationMarker.bindPopup(`<strong>${state.city}</strong><br>💨 Live Surface Wind: ${speed} km/h @ ${Math.round(deg)}°`);
+    }
+    if (miniLocationMarker) {
+      miniLocationMarker.setIcon(icon);
+    }
+  }
+
+  function initWindVectorControls() {
+    const btnDesktop = document.getElementById('btn-toggle-wind-vector');
+    const btnFull = document.getElementById('btn-full-toggle-wind-vector');
+
+    function toggleWind() {
+      state.isWindVectorActive = !state.isWindVectorActive;
+      const statusText = state.isWindVectorActive ? '💨 Wind Vector: ON' : '💨 Wind Vector: OFF';
+
+      if (btnDesktop) {
+        btnDesktop.textContent = statusText;
+        btnDesktop.classList.toggle('active', state.isWindVectorActive);
+      }
+      if (btnFull) {
+        btnFull.textContent = statusText;
+        btnFull.classList.toggle('active', state.isWindVectorActive);
+      }
+      updateWindVectorMarkers(state.windDirectionDeg, state.windSpeedKm);
+    }
+
+    if (btnDesktop) btnDesktop.addEventListener('click', toggleWind);
+    if (btnFull) btnFull.addEventListener('click', toggleWind);
+  }
+
+  // ---------------------------------------------------------------------------
   // 4. Interactive Leaflet Maps & Real-time Radar Feeds
   // ---------------------------------------------------------------------------
   function initMaps() {
@@ -199,14 +275,9 @@
 
       L.tileLayer(mapTileUrl, tileOptions).addTo(homeMiniMap);
 
-      // Glowing Location Dot
-      const pulsingIcon = L.divIcon({
-        className: 'gps-pulse-marker',
-        html: '<div style="width:14px;height:14px;background:#0066FF;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 0 10px #0066FF;"></div>',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-      });
-      miniLocationMarker = L.marker([state.lat, state.lon], { icon: pulsingIcon }).addTo(homeMiniMap);
+      miniLocationMarker = L.marker([state.lat, state.lon], {
+        icon: createWindMarkerIcon(state.windDirectionDeg, state.windSpeedKm),
+      }).addTo(homeMiniMap);
 
       // Mini Map Click Handler -> Dynamic Place Insights
       homeMiniMap.on('click', (e) => {
@@ -225,8 +296,10 @@
 
       L.tileLayer(mapTileUrl, tileOptions).addTo(fullMap);
 
-      fullLocationMarker = L.marker([state.lat, state.lon]).addTo(fullMap);
-      fullLocationMarker.bindPopup(`<strong>${state.city}</strong><br>Current Location`).openPopup();
+      fullLocationMarker = L.marker([state.lat, state.lon], {
+        icon: createWindMarkerIcon(state.windDirectionDeg, state.windSpeedKm),
+      }).addTo(fullMap);
+      fullLocationMarker.bindPopup(`<strong>${state.city}</strong><br>💨 Live Surface Wind: ${state.windSpeedKm} km/h @ ${Math.round(state.windDirectionDeg)}°`).openPopup();
 
       // Full Map Click Handler -> Dynamic Place Insights
       fullMap.on('click', (e) => {
@@ -245,8 +318,10 @@
 
       L.tileLayer(mapTileUrl, tileOptions).addTo(desktopMap);
 
-      desktopLocationMarker = L.marker([state.lat, state.lon]).addTo(desktopMap);
-      desktopLocationMarker.bindPopup(`<strong>${state.city}</strong><br>Current Location`);
+      desktopLocationMarker = L.marker([state.lat, state.lon], {
+        icon: createWindMarkerIcon(state.windDirectionDeg, state.windSpeedKm),
+      }).addTo(desktopMap);
+      desktopLocationMarker.bindPopup(`<strong>${state.city}</strong><br>💨 Live Surface Wind: ${state.windSpeedKm} km/h @ ${Math.round(state.windDirectionDeg)}°`);
 
       desktopMap.on('click', (e) => {
         handleMapClickInsights(e.latlng.lat, e.latlng.lng);
@@ -796,6 +871,11 @@
       document.getElementById('val-precipitation').textContent = `${wx.precip}%`;
       document.getElementById('val-uv').textContent = `${wx.uv}`;
       document.getElementById('val-uv-desc').textContent = (wx.uv > 7) ? 'Very High' : 'High';
+
+      // Update Live Wind Vector Compass on Map (Step 2)
+      const windDeg = (data.current && data.current.wind_direction_10m !== undefined) ? data.current.wind_direction_10m : 135;
+      const windSpeed = (data.current && data.current.wind_speed_10m !== undefined) ? data.current.wind_speed_10m : wx.wind;
+      updateWindVectorMarkers(windDeg, windSpeed);
 
       // Sunrise & Sunset (Calculated or Mock fallback)
       document.getElementById('val-sunrise').textContent = '5:51 AM';

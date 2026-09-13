@@ -60,7 +60,7 @@ class WeatherService:
         url = (
             "https://api.open-meteo.com/v1/forecast?"
             f"latitude={lat}&longitude={lon}&"
-            "current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure&"
+            "current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure&"
             "hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,vapour_pressure_deficit,soil_moisture_0_to_1cm&"
             "daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&"
             "timezone=Asia%2FKolkata&forecast_days=3"
@@ -101,6 +101,7 @@ class WeatherService:
             weather_code=int(c.get("weather_code", 0)),
             wind_speed_10m=float(c.get("wind_speed_10m", 10.0)),
             wind_gusts_10m=float(c.get("wind_gusts_10m", 15.0)),
+            wind_direction_10m=float(c.get("wind_direction_10m", 135.0)),
             surface_pressure=float(c.get("surface_pressure", 1010.0)),
             dew_point_2m=float(hourly_dew),
             vapour_pressure_deficit=float(hourly_vpd),
@@ -168,6 +169,7 @@ class WeatherService:
             weather_code=51,
             wind_speed_10m=9.5,
             wind_gusts_10m=18.0,
+            wind_direction_10m=135.0,
             surface_pressure=980.0,
             dew_point_2m=24.1,
             vapour_pressure_deficit=0.25,

@@ -16,6 +16,7 @@ class CurrentWeatherMetrics(BaseModel):
     weather_code: int = Field(..., description="WMO synoptic weather code 0-99")
     wind_speed_10m: float = Field(..., description="Sustained wind speed in km/h")
     wind_gusts_10m: float = Field(..., description="Peak wind gusts in km/h")
+    wind_direction_10m: float = Field(default=0.0, description="Wind direction in degrees 0-360")
     surface_pressure: float = Field(..., description="Barometric pressure in hPa")
     dew_point_2m: float = Field(..., description="Dew point in Celsius")
     vapour_pressure_deficit: float = Field(..., description="VPD in kPa")
