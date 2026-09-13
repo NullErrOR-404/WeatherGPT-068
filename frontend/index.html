@@ -342,17 +342,15 @@
                   </div>
                 </div>
                 
-                <!-- Radar Loop Toolbar -->
-                <div class="desktop-radar-toolbar">
-                  <button id="btn-desktop-radar-play" class="playback-btn" aria-label="Play radar loop">
-                    <span id="desktop-play-icon">▶</span>
-                  </button>
-                  <div class="playback-timeline-wrap">
-                    <span class="playback-time-label" id="desktop-timestamp-label">INSAT-3DS Thermal IR • Live Over India</span>
-                    <div class="playback-bar"><div class="playback-progress" id="desktop-playback-progress"></div></div>
+                <!-- Streamlined Footer Status & Recenter (No Clunky Autoplay) -->
+                <div class="desktop-map-footer-toolbar">
+                  <div class="map-live-status-pill">
+                    <span class="live-status-dot"></span>
+                    <span id="desktop-timestamp-label">INSAT-3DS Satellite &amp; Surface Wind • Live Feed</span>
                   </div>
-                  <button id="btn-desktop-recenter" class="recenter-btn" title="Recenter map to your location">
+                  <button id="btn-desktop-recenter" class="recenter-action-btn" title="Recenter map to your location">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Recenter</span>
                   </button>
                 </div>
 
@@ -402,16 +400,14 @@
           </div>
 
           <div id="fullscreen-map-canvas" class="fullscreen-map-canvas"></div>
-          <div class="radar-playback-toolbar">
-            <button id="btn-radar-play" class="playback-btn" aria-label="Play radar animation">
-              <span id="radar-play-icon">▶</span>
-            </button>
-            <div class="playback-timeline-wrap">
-              <span class="playback-time-label" id="radar-timestamp-label">INSAT-3DS Live Satellite Overlay</span>
-              <div class="playback-bar"><div class="playback-progress" id="radar-playback-progress"></div></div>
+          <div class="desktop-map-footer-toolbar fullscreen-footer-toolbar">
+            <div class="map-live-status-pill">
+              <span class="live-status-dot"></span>
+              <span id="radar-timestamp-label">INSAT-3DS Satellite &amp; Surface Wind • Live Feed</span>
             </div>
-            <button id="btn-recenter-map" class="recenter-btn" title="Recenter to your location">
+            <button id="btn-recenter-map" class="recenter-action-btn" title="Recenter to your location">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>Recenter</span>
             </button>
           </div>
         </div>

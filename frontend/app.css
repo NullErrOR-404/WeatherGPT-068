@@ -640,21 +640,71 @@ button {
     white-space: nowrap;
   }
 
-  .desktop-radar-toolbar {
+  .desktop-map-footer-toolbar {
     position: absolute;
     bottom: 34px;
     left: 16px;
     right: 16px;
     background-color: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     border-radius: var(--radius-lg);
-    padding: 10px 14px;
+    padding: 8px 14px;
     box-shadow: var(--shadow-float);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     z-index: 500;
     border: 1px solid var(--color-border-subtle);
+  }
+
+  .fullscreen-footer-toolbar {
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+  }
+
+  .map-live-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+  }
+
+  .live-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10B981;
+    animation: liveDotPulse 2s infinite;
+  }
+
+  .recenter-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #FFFFFF;
+    border: 1px solid var(--color-border-subtle);
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .recenter-action-btn:hover {
+    background-color: #EFF6FF;
+    border-color: #BFDBFE;
+    color: var(--color-brand-blue);
+  }
+
+  .recenter-action-btn svg {
+    width: 14px;
+    height: 14px;
   }
 
   .desktop-map-hint {
