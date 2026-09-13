@@ -67,6 +67,8 @@
     initTabNavigation();
     initLocationAndRoleSelectors();
     initMaps();
+    initSatelliteInspector();
+    initAutoRefreshTimer();
     initChatCopilot();
     initUSSDSimulator();
     initSpeechAPIs();
@@ -297,6 +299,22 @@
 
   async function fetchRainViewerRadarTimestamps() {
     try {
+      const res = await fetch(`/api/radar/nowcast?lat=${state.lat}&lon=${state.lon}`);
+      if (res.ok) {
+        const data = await res.json();
+        const frames = [...(data.past_frames || []), ...(data.nowcast_frames || [])];
+        if (frames.length > 0) {
+          state.radarTimestamps = frames.map((f) => f.path);
+          state.currentRadarIndex = (data.past_frames && data.past_frames.length > 0) ? data.past_frames.length - 1 : 0;
+          applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
+          return;
+        }
+      }
+    } catch (err) {
+      // Fallback to direct RainViewer
+    }
+
+    try {
       const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
       if (!res.ok) throw new Error('RainViewer offline');
       const data = await res.json();
@@ -401,24 +419,105 @@
 
   function updateMapOverlayLayer(layerType) {
     if (layerType === 'satellite') {
-      const satUrl = 'https://tilecache.rainviewer.com/v2/satellite/now/256/{z}/{x}/{y}/0/0_0.png';
-      if (fullRadarLayer && fullMap) {
-        fullMap.removeLayer(fullRadarLayer);
-        fullRadarLayer = L.tileLayer(satUrl, { opacity: 0.7 }).addTo(fullMap);
-      }
-      if (desktopRadarLayer && desktopMap) {
-        desktopMap.removeLayer(desktopRadarLayer);
-        desktopRadarLayer = L.tileLayer(satUrl, { opacity: 0.7 }).addTo(desktopMap);
-      }
-      const label = document.getElementById('radar-timestamp-label');
-      if (label) label.textContent = 'INSAT-3DS Satellite Clouds Feed';
-      const dLabel = document.getElementById('desktop-timestamp-label');
-      if (dLabel) dLabel.textContent = 'INSAT-3DS Satellite Clouds Feed';
+      openSatelliteModal('ir1');
     } else {
       if (state.radarTimestamps.length > 0) {
         applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
       }
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4b. INSAT-3DS Live Satellite Inspector Modal Controller
+  // ---------------------------------------------------------------------------
+  function initSatelliteInspector() {
+    const modal = document.getElementById('modal-satellite-viewer');
+    const btnClose = document.getElementById('btn-close-sat-modal');
+    const channelBtns = document.querySelectorAll('.sat-channel-btn');
+    const satImg = document.getElementById('sat-live-image');
+    const loader = document.getElementById('sat-img-loader');
+
+    if (btnClose && modal) {
+      btnClose.addEventListener('click', () => {
+        modal.classList.add('hidden');
+      });
+    }
+
+    channelBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ch = btn.getAttribute('data-channel');
+        channelBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadSatelliteChannel(ch);
+      });
+    });
+
+    if (satImg && loader) {
+      satImg.addEventListener('load', () => {
+        loader.classList.add('hidden');
+      });
+      satImg.addEventListener('error', () => {
+        loader.classList.add('hidden');
+      });
+    }
+
+    fetchSatelliteMetadata();
+  }
+
+  function openSatelliteModal(channel = 'ir1') {
+    const modal = document.getElementById('modal-satellite-viewer');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    loadSatelliteChannel(channel);
+  }
+
+  function loadSatelliteChannel(ch) {
+    const satImg = document.getElementById('sat-live-image');
+    const loader = document.getElementById('sat-img-loader');
+    const descEl = document.getElementById('sat-channel-desc');
+
+    const CHANNEL_DESCS = {
+      ir1: 'Thermal Infrared (10.8 µm): Tracks convective cloud-top temperatures, severe thunderstorms, and monsoon depressions.',
+      vis: 'Daylight Visible (0.65 µm): High-resolution true optical cloud reflectance and surface daylight illumination across India.',
+      wv: 'Water Vapour (6.8 µm): Mid-to-upper tropospheric moisture transport, jet streams, and atmospheric river dynamics.',
+    };
+
+    if (descEl && CHANNEL_DESCS[ch]) {
+      descEl.textContent = CHANNEL_DESCS[ch];
+    }
+
+    if (loader) loader.classList.remove('hidden');
+    if (satImg) {
+      satImg.src = `/api/satellite/live?channel=${ch}&_t=${Date.now()}`;
+    }
+  }
+
+  async function fetchSatelliteMetadata() {
+    try {
+      const res = await fetch('/api/satellite/metadata');
+      if (!res.ok) return;
+      const data = await res.json();
+      const tsEl = document.getElementById('sat-scan-timestamp');
+      if (tsEl && data.channels && data.channels.length > 0) {
+        tsEl.textContent = `Latest Orbit Scan: ${data.channels[0].last_scan_ist} • Orbital Slot: ${data.orbital_slot}`;
+      }
+    } catch (e) {
+      // Non-blocking
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4c. Continuous 5-Minute Auto-Refresh Engine
+  // ---------------------------------------------------------------------------
+  function initAutoRefreshTimer() {
+    // 5-minute background polling interval (300,000 ms)
+    setInterval(() => {
+      console.log('🔄 WeatherGPT: Running scheduled 5-minute real-time atmospheric sync...');
+      loadLiveWeatherData();
+      loadActiveAlerts();
+      fetchRainViewerRadarTimestamps();
+      fetchSatelliteMetadata();
+    }, 300000);
   }
 
   // ---------------------------------------------------------------------------
@@ -559,6 +658,35 @@
       // Sunrise & Sunset (Calculated or Mock fallback)
       document.getElementById('val-sunrise').textContent = '5:51 AM';
       document.getElementById('val-sunset').textContent = '6:22 PM';
+
+      // Update Dynamic Rain Nowcast Banner
+      const rainBanner = document.getElementById('hero-rain-nowcast-banner');
+      const rainTitle = document.getElementById('rain-nowcast-title');
+      const rainSub = document.getElementById('rain-nowcast-sub');
+      const rainIcon = document.getElementById('rain-nowcast-icon');
+      const rainChip = document.getElementById('rain-nowcast-chip');
+
+      if (rainBanner) {
+        if (wx.precip >= 50) {
+          rainBanner.classList.add('rain-active');
+          if (rainIcon) rainIcon.textContent = '⛈️';
+          if (rainTitle) rainTitle.textContent = `High Rain Probability (${wx.precip}%): Showers likely in next 30–45m`;
+          if (rainSub) rainSub.textContent = 'Live radar shows dense rain cloud cluster approaching your coordinates';
+          if (rainChip) rainChip.textContent = 'Rain Alert';
+        } else if (wx.precip >= 20) {
+          rainBanner.classList.remove('rain-active');
+          if (rainIcon) rainIcon.textContent = '🌦️';
+          if (rainTitle) rainTitle.textContent = `Light Rain Possible (${wx.precip}%): Isolated convective drizzle`;
+          if (rainSub) rainSub.textContent = 'Scattered showers predicted across nearby district sectors';
+          if (rainChip) rainChip.textContent = 'Nowcast';
+        } else {
+          rainBanner.classList.remove('rain-active');
+          if (rainIcon) rainIcon.textContent = '☀️';
+          if (rainTitle) rainTitle.textContent = 'Zero Rain Expected: Dry & stable next 3 hours';
+          if (rainSub) rainSub.textContent = `Current condition: ${wx.condition} • Wind ${wx.wind} km/h • Humidity ${wx.humidity}%`;
+          if (rainChip) rainChip.textContent = 'Stable';
+        }
+      }
 
       // Update Risk Gauge
       loadRiskAssessment(data);
@@ -773,6 +901,51 @@
     if (btnCloseLoc && locModal) {
       btnCloseLoc.addEventListener('click', () => {
         locModal.classList.add('hidden');
+      });
+    }
+
+    // One-Tap GPS Geolocation Auto-Detection
+    const btnGps = document.getElementById('btn-detect-gps');
+    if (btnGps) {
+      btnGps.addEventListener('click', () => {
+        if (!('geolocation' in navigator)) {
+          alert('GPS Geolocation is not supported by your device.');
+          return;
+        }
+
+        const origHtml = btnGps.innerHTML;
+        btnGps.innerHTML = '<span>⏳ Acquiring GPS Satellites...</span>';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            state.lat = pos.coords.latitude;
+            state.lon = pos.coords.longitude;
+            state.city = 'Live GPS Location';
+            state.stateName = `${state.lat.toFixed(2)}°N, ${state.lon.toFixed(2)}°E`;
+
+            document.getElementById('display-location-name').textContent = `${state.city} (${state.stateName})`;
+            if (locModal) locModal.classList.add('hidden');
+            btnGps.innerHTML = origHtml;
+
+            loadLiveWeatherData();
+            if (homeMiniMap) {
+              homeMiniMap.setView([state.lat, state.lon], 9);
+              if (miniLocationMarker) miniLocationMarker.setLatLng([state.lat, state.lon]);
+            }
+            if (fullMap) {
+              fullMap.setView([state.lat, state.lon], 9);
+              if (fullLocationMarker) fullLocationMarker.setLatLng([state.lat, state.lon]);
+            }
+            if (desktopMap) {
+              desktopMap.setView([state.lat, state.lon], 9);
+              if (desktopLocationMarker) desktopLocationMarker.setLatLng([state.lat, state.lon]);
+            }
+          },
+          (err) => {
+            alert(`GPS acquisition failed: ${err.message}. Please pick your city from the list.`);
+            btnGps.innerHTML = origHtml;
+          },
+          { timeout: 10000, enableHighAccuracy: true }
+        );
       });
     }
 

@@ -58,6 +58,7 @@ from .services.prithvi_mesh_service import (
     PrithviMeshService,
 )
 from .services.aapda_mitra_service import aapda_mitra_service, AapdaMitraService
+from .services.satellite_service import satellite_service
 from .services.fishermen_voyage_service import fishermen_voyage_service
 
 
@@ -540,6 +541,46 @@ async def get_marine_voyage_advisory(req: MarineVoyageRequest):
 async def get_active_pfz_shoals():
     """Returns active INCOIS Potential Fishing Zones (PFZ) for ocean harvest optimization."""
     return fishermen_voyage_service.INCOIS_PFZ_CATALOG
+
+
+@app.get("/api/satellite/live")
+async def get_live_satellite_image(channel: str = Query("ir1", pattern="^(ir1|vis|wv)$")):
+    """
+    Returns real-time INSAT-3DS multi-spectral satellite imagery from IMD.
+    Cached in RAM (5-min TTL) for ultra-low latency (<20ms).
+    Channels:
+    - ir1: Thermal Infrared (Cloud-top temperatures & convective storms)
+    - vis: Daylight Visible (Optical cloud reflectivity)
+    - wv: Mid-tropospheric Water Vapour
+    """
+    image_bytes, content_type, timestamp = await satellite_service.get_satellite_image(channel)
+    return Response(
+        content=image_bytes,
+        media_type=content_type,
+        headers={
+            "Cache-Control": "public, max-age=300",
+            "X-Satellite-Source": "INSAT-3DS / IMD MoES",
+            "X-Scan-Epoch": str(int(timestamp)),
+        },
+    )
+
+
+@app.get("/api/satellite/metadata")
+async def get_satellite_metadata():
+    """Returns INSAT-3DS orbital slot, channel coverage, and scan freshness metadata."""
+    return satellite_service.get_satellite_metadata()
+
+
+@app.get("/api/radar/nowcast")
+async def get_radar_nowcast(
+    lat: float = Query(13.0827, ge=-90.0, le=90.0),
+    lon: float = Query(80.2707, ge=-180.0, le=180.0),
+):
+    """
+    Returns live RainViewer Doppler radar scan paths (13 past frames + predictive nowcast)
+    with low-latency 2-minute memory caching.
+    """
+    return await satellite_service.get_radar_nowcast(lat, lon)
 
 
 # Mount static frontend directory

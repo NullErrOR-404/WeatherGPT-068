@@ -189,6 +189,18 @@
                   <span class="metric-sub alert-txt" id="val-uv-desc">High</span>
                 </div>
               </div>
+
+              <!-- Dynamic Rain Prediction Nowcast Banner -->
+              <div class="hero-rain-banner" id="hero-rain-nowcast-banner">
+                <div class="rain-banner-content">
+                  <span class="rain-banner-icon" id="rain-nowcast-icon">🌧️</span>
+                  <div class="rain-banner-text-wrap">
+                    <span class="rain-banner-title" id="rain-nowcast-title">Rain Nowcast: Checking radar...</span>
+                    <span class="rain-banner-sub" id="rain-nowcast-sub">Doppler radar &amp; atmospheric sounding feed</span>
+                  </div>
+                </div>
+                <span class="rain-banner-chip" id="rain-nowcast-chip">Live</span>
+              </div>
             </section>
 
             <!-- Hourly Forecast Horizontal Carousel -->
@@ -615,6 +627,13 @@
       </div>
 
       <div class="location-picker-body">
+        <div class="gps-detect-bar">
+          <button id="btn-detect-gps" class="btn-detect-gps" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="gps-icon-svg"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+            <span>🎯 Detect My Live Location (GPS)</span>
+          </button>
+          <span class="gps-hint">Hyperlocal weather for your exact coordinates in India</span>
+        </div>
         <div class="quick-cities-list">
           <button class="city-pick-btn active" data-city="Chennai" data-lat="13.0827" data-lon="80.2707" data-state="Tamil Nadu" data-persona="citizen">📍 <strong>Chennai</strong>, Tamil Nadu (Current)</button>
           <button class="city-pick-btn" data-city="Wardha" data-lat="20.7453" data-lon="78.6022" data-state="Maharashtra" data-persona="farmer">🌾 <strong>Wardha</strong>, Maharashtra (Cotton &amp; Mandi)</button>
@@ -622,6 +641,56 @@
           <button class="city-pick-btn" data-city="Mumbai" data-lat="19.0760" data-lon="72.8777" data-state="Maharashtra" data-persona="commuter">🚗 <strong>Mumbai</strong>, Maharashtra (Urban Underpass Inundation)</button>
           <button class="city-pick-btn" data-city="Chamoli" data-lat="30.4074" data-lon="79.3262" data-state="Uttarakhand" data-persona="volunteer">🛡️ <strong>Chamoli</strong>, Uttarakhand (Cloudburst &amp; Mesh)</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Live INSAT-3DS Multi-Spectral Satellite Inspector -->
+  <div id="modal-satellite-viewer" class="bottom-sheet-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="satellite-modal-title">
+    <div class="bottom-sheet-card satellite-modal-card">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <div class="sat-title-row">
+            <span class="sheet-badge-tag blue" id="sat-status-badge">🛰️ LIVE INSAT-3DS</span>
+            <span class="sat-orbit-tag">74.0°E Geostationary • MoES/ISRO</span>
+          </div>
+          <h3 class="sheet-title" id="satellite-modal-title">India Sector Satellite Clouds</h3>
+          <p class="sheet-sub" id="sat-scan-timestamp">Last Scan: Fetching live scan...</p>
+        </div>
+        <button class="sheet-close-btn" id="btn-close-sat-modal" aria-label="Close Satellite Viewer">✕</button>
+      </div>
+
+      <div class="sat-channel-nav">
+        <button class="sat-channel-btn active" data-channel="ir1" title="Thermal Infrared (10.8 µm)">
+          <span class="ch-badge">IR1</span>
+          <span class="ch-label">Thermal Infrared (Cloud Depth)</span>
+        </button>
+        <button class="sat-channel-btn" data-channel="vis" title="Daylight Visible (0.65 µm)">
+          <span class="ch-badge">VIS</span>
+          <span class="ch-label">Daylight Visible</span>
+        </button>
+        <button class="sat-channel-btn" data-channel="wv" title="Water Vapour (6.8 µm)">
+          <span class="ch-badge">WV</span>
+          <span class="ch-label">Water Vapour</span>
+        </button>
+      </div>
+
+      <div class="sat-viewport-frame">
+        <div class="sat-loader-spinner hidden" id="sat-img-loader">
+          <div class="spinner-ring"></div>
+          <span>Loading live satellite telemetry...</span>
+        </div>
+        <img id="sat-live-image" class="sat-render-img" src="/api/satellite/live?channel=ir1" alt="INSAT-3DS Live Satellite Image of India">
+        <div class="sat-overlay-legend">
+          <span class="legend-scale-label">Deep Convection / Cold Cloud Tops &lt; -40°C</span>
+          <div class="legend-gradient-bar"></div>
+        </div>
+      </div>
+
+      <div class="sat-meta-footer">
+        <span id="sat-channel-desc">Thermal Infrared channel tracks convective cloud depths, thunderstorm updrafts, and monsoon depressions.</span>
+        <a href="https://mausam.imd.gov.in" target="_blank" rel="noopener" class="sat-provenance-link">Source: India Meteorological Department (IMD) ↗</a>
       </div>
     </div>
   </div>
