@@ -317,6 +317,30 @@
               <!-- Desktop Map Container -->
               <div class="desktop-map-viewport">
                 <div id="desktop-live-map" class="desktop-live-map" aria-label="Desktop Live Weather Map"></div>
+
+                <!-- Floating Real-time Atmospheric Telemetry Pill (Vector SVGs) -->
+                <div class="map-floating-telemetry" id="desktop-map-telemetry">
+                  <div class="telemetry-item" title="INSAT-3DS Geostationary Multi-Spectral Channel">
+                    <svg class="telemetry-icon" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 10a8 8 0 0 1 10-7.8M7 13a5 5 0 0 1 7-4.9M17 21l-4-4m0 0l-2-2 4-4 2 2-4 4z"/>
+                    </svg>
+                    <span class="telemetry-val" id="desk-telemetry-clouds">10.8µm IR</span>
+                  </div>
+                  <div class="telemetry-divider"></div>
+                  <div class="telemetry-item" title="Live Surface Wind Speed & Direction">
+                    <svg class="telemetry-icon" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+                    </svg>
+                    <span class="telemetry-val" id="desk-telemetry-wind">11 km/h SE (135°)</span>
+                  </div>
+                  <div class="telemetry-divider"></div>
+                  <div class="telemetry-item" title="Live Precipitation Nowcast">
+                    <svg class="telemetry-icon" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M8 19v2m4-2v2m4-2v2"/>
+                    </svg>
+                    <span class="telemetry-val" id="desk-telemetry-rain">39% Nowcast</span>
+                  </div>
+                </div>
                 
                 <!-- Radar Loop Toolbar -->
                 <div class="desktop-radar-toolbar">

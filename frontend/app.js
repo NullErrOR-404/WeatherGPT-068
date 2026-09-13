@@ -563,6 +563,38 @@
     if (tsLabel) tsLabel.textContent = timeText;
     const desktopTsLabel = document.getElementById('desktop-timestamp-label');
     if (desktopTsLabel) desktopTsLabel.textContent = timeText;
+
+    updateMapTelemetryBadge();
+  }
+
+  function updateMapTelemetryBadge() {
+    const cloudEl = document.getElementById('desk-telemetry-clouds');
+    const windEl = document.getElementById('desk-telemetry-wind');
+    const rainEl = document.getElementById('desk-telemetry-rain');
+
+    if (cloudEl) {
+      const wavelengths = {
+        ir1: '10.8µm IR',
+        vis: '0.65µm VIS',
+        wv: '6.8µm WV',
+      };
+      cloudEl.textContent = wavelengths[currentSatChannel] || '10.8µm IR';
+    }
+
+    if (windEl) {
+      const cardinals = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      const idx = Math.round(state.windDirectionDeg / 45) % 8;
+      const card = cardinals[idx];
+      windEl.textContent = `${state.windSpeedKm} km/h ${card} (${Math.round(state.windDirectionDeg)}°)`;
+    }
+
+    if (rainEl) {
+      let precipPct = 39;
+      if (state.currentWeather && state.currentWeather.nowcast_3h && state.currentWeather.nowcast_3h.length > 0) {
+        precipPct = state.currentWeather.nowcast_3h[0].rain_prob_pct;
+      }
+      rainEl.textContent = `${precipPct}% Nowcast`;
+    }
   }
 
   function removeSatelliteOverlay() {
@@ -876,6 +908,7 @@
       const windDeg = (data.current && data.current.wind_direction_10m !== undefined) ? data.current.wind_direction_10m : 135;
       const windSpeed = (data.current && data.current.wind_speed_10m !== undefined) ? data.current.wind_speed_10m : wx.wind;
       updateWindVectorMarkers(windDeg, windSpeed);
+      updateMapTelemetryBadge();
 
       // Sunrise & Sunset (Calculated or Mock fallback)
       document.getElementById('val-sunrise').textContent = '5:51 AM';

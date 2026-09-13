@@ -595,6 +595,51 @@ button {
     background-color: #E2E8F0;
   }
 
+  /* Glassmorphic Overhead Atmospheric Telemetry Pill (Step 3) */
+  .map-floating-telemetry {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 550;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    border-radius: var(--radius-full);
+    padding: 6px 14px;
+    box-shadow: 0 4px 16px rgba(10, 37, 64, 0.08);
+    pointer-events: auto;
+    transition: all 0.25s ease;
+  }
+
+  .telemetry-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+    letter-spacing: 0.02em;
+  }
+
+  .telemetry-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .telemetry-divider {
+    width: 1px;
+    height: 14px;
+    background-color: #CBD5E1;
+  }
+
+  .telemetry-val {
+    white-space: nowrap;
+  }
+
   .desktop-radar-toolbar {
     position: absolute;
     bottom: 34px;
