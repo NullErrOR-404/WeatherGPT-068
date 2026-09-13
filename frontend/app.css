@@ -1,6 +1,7 @@
 /* ==========================================================================
    WEATHERGPT — HIGH-CONTRAST OUTDOOR LIGHT MODE DESIGN SYSTEM
-   Pixel-Accurate Native Mobile Rebuild Grounded in Reference Craft
+   True Responsive Architecture: Exact Mobile-First + Dual-Column Desktop Grid
+   Zero Fake Phone Bezels • 60 FPS GPU Acceleration • WCAG AAA Contrast
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -75,14 +76,14 @@
 
 html, body {
   width: 100%;
-  height: 100%;
-  background-color: #E2E8F0;
+  min-height: 100%;
+  background-color: var(--color-canvas-bg);
   font-family: var(--font-family-body);
   color: var(--color-text-main);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 button {
@@ -94,92 +95,57 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   3. Desktop Chassis & Viewport Adaptation
+   3. Responsive Full-Width Application Container (No Fake Bezels)
    -------------------------------------------------------------------------- */
-.desktop-backdrop {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at 50% 20%, #EEF2F6 0%, #CBD5E1 100%);
-  position: relative;
-}
-
-.mobile-device-chassis {
+.app-container {
   width: 100%;
-  max-width: 430px;
-  height: 100%;
-  max-height: 915px;
-  background-color: var(--color-canvas-bg);
-  position: relative;
+  margin: 0 auto;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  box-shadow: var(--shadow-float);
+  position: relative;
 }
 
-@media (min-width: 481px) {
-  .mobile-device-chassis {
-    height: 92vh;
-    border-radius: 46px;
-    border: 9px solid #0F172A;
-    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+/* Desktop Width */
+@media (min-width: 1024px) {
+  .app-container {
+    max-width: 1380px;
+    padding: 16px 32px 32px 32px;
   }
 }
 
-@media (max-width: 480px) {
-  .desktop-backdrop {
-    background: var(--color-canvas-bg);
+/* Tablet Width */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-container {
+    max-width: 768px;
+    padding: 16px 24px 84px 24px;
   }
-  .mobile-device-chassis {
-    max-width: 100%;
-    max-height: 100%;
-    height: 100vh;
-    border-radius: 0;
-    border: none;
+}
+
+/* Mobile Viewport */
+@media (max-width: 767px) {
+  .app-container {
+    max-width: 480px;
+    padding: 12px 16px 84px 16px;
   }
 }
 
 /* --------------------------------------------------------------------------
-   4. View Tabs Container
-   -------------------------------------------------------------------------- */
-.view-tab {
-  display: none;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 16px 18px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.view-tab::-webkit-scrollbar {
-  display: none;
-}
-
-.view-tab.active {
-  display: block;
-  animation: tabFadeIn 220ms ease-out forwards;
-}
-
-@keyframes tabFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.scroll-bottom-cushion {
-  height: 96px; /* Allows full scroll past bottom navigation */
-}
-
-/* --------------------------------------------------------------------------
-   5. Top Header (Brand, Notifications, Language)
+   4. Top Header & Navigation
    -------------------------------------------------------------------------- */
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 0 14px 0;
+  padding: 8px 0 16px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: 16px;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .brand-title {
@@ -192,6 +158,77 @@ button {
 
 .brand-highlight {
   color: var(--color-brand-blue);
+}
+
+.gov-pill-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background-color: var(--color-subtle-bg);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-subtle);
+}
+
+@media (max-width: 520px) {
+  .gov-pill-tag {
+    display: none;
+  }
+}
+
+/* Desktop Navigation Links */
+.desktop-nav-links {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border-subtle);
+    padding: 5px 8px;
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-subtle);
+  }
+
+  .desktop-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+    position: relative;
+  }
+
+  .desktop-nav-btn:hover {
+    color: var(--color-brand-blue);
+    background-color: var(--color-brand-blue-light);
+  }
+
+  .desktop-nav-btn.active {
+    background-color: var(--color-brand-blue-light);
+    color: var(--color-brand-blue);
+    font-weight: 700;
+  }
+
+  .dnav-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .desktop-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-alert-red-pill);
+    margin-left: 2px;
+  }
 }
 
 .header-actions {
@@ -212,7 +249,7 @@ button {
   background-color: var(--color-card-bg);
   border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-subtle);
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  transition: transform var(--transition-fast);
 }
 
 .icon-action-btn:active {
@@ -248,7 +285,6 @@ button {
   font-weight: 600;
   color: var(--color-text-main);
   box-shadow: var(--shadow-subtle);
-  transition: background-color var(--transition-fast);
 }
 
 .chevron-svg {
@@ -258,7 +294,180 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   6. Location & Risk Gauge Row
+   5. View Tabs Flow
+   -------------------------------------------------------------------------- */
+.app-main-flow {
+  flex: 1;
+}
+
+.view-tab {
+  display: none;
+  animation: tabFadeIn 220ms ease-out forwards;
+}
+
+.view-tab.active {
+  display: block;
+}
+
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scroll-bottom-cushion {
+  height: 96px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Dual-Column Desktop Grid Layout
+   -------------------------------------------------------------------------- */
+.home-dual-grid {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .home-dual-grid {
+    display: grid;
+    grid-template-columns: 460px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+}
+
+.home-feed-column {
+  width: 100%;
+}
+
+/* Mobile-Only Map Block */
+.mobile-only-map-block {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .mobile-only-map-block {
+    display: none; /* On desktop, rendered in persistent right column */
+  }
+}
+
+/* Desktop Persistent Radar Column */
+.desktop-radar-column {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-radar-column {
+    display: block;
+    position: sticky;
+    top: 20px;
+  }
+
+  .desktop-radar-card {
+    background-color: var(--color-card-bg);
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-card);
+  }
+
+  .desktop-radar-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .radar-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-brand-blue);
+    background-color: var(--color-brand-blue-light);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+
+  .radar-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background-color: #10B981;
+    animation: liveDotPulse 1.8s infinite;
+  }
+
+  @keyframes liveDotPulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .radar-main-title {
+    font-family: var(--font-family-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-text-main);
+  }
+
+  .radar-sub-text {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+  }
+
+  .desktop-map-viewport {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--color-border-subtle);
+  }
+
+  .desktop-live-map {
+    width: 100%;
+    height: 100%;
+    background-color: #E2E8F0;
+  }
+
+  .desktop-radar-toolbar {
+    position: absolute;
+    bottom: 34px;
+    left: 16px;
+    right: 16px;
+    background-color: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    padding: 10px 14px;
+    box-shadow: var(--shadow-float);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 500;
+    border: 1px solid var(--color-border-subtle);
+  }
+
+  .desktop-map-hint {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(6px);
+    color: #FFFFFF;
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.72rem;
+    font-weight: 500;
+    z-index: 500;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   7. Location & Risk Gauge Row (Reference Precision)
    -------------------------------------------------------------------------- */
 .location-risk-row {
   display: flex;
@@ -408,7 +617,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   7. Hero Weather Card (Sky-Blue Gradient, Tactile Icon, Metrics)
+   8. Hero Weather Card (Sky-Blue Gradient, Tactile Icon, Metrics)
    -------------------------------------------------------------------------- */
 .hero-weather-card {
   background: linear-gradient(135deg, #E0F2FE 0%, #F0F9FF 55%, #FFFFFF 100%);
@@ -434,7 +643,6 @@ button {
   gap: 16px;
 }
 
-/* 3D Tactile Sun-Cloud Illustration */
 .tactile-sun-cloud {
   position: relative;
   width: 72px;
@@ -507,7 +715,6 @@ button {
   font-weight: 500;
 }
 
-/* Sunrise & Sunset Column */
 .hero-sun-cycle {
   display: flex;
   flex-direction: column;
@@ -624,7 +831,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   8. Section Headers & Cards
+   9. Section Headers & Cards
    -------------------------------------------------------------------------- */
 .section-card-block {
   margin-bottom: 22px;
@@ -658,7 +865,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   9. Hourly Forecast Horizontal Carousel
+   10. Hourly Forecast Horizontal Carousel
    -------------------------------------------------------------------------- */
 .hourly-forecast-scroll {
   display: flex;
@@ -711,9 +918,9 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   10. Live Weather Map Card
+   11. Live Weather Map Card (Mobile Preview)
    -------------------------------------------------------------------------- */
-.layer-select {
+.layer-select, .layer-select-sm {
   appearance: none;
   background-color: var(--color-card-bg);
   border: 1px solid var(--color-border-subtle);
@@ -787,7 +994,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   11. Active Alerts Section
+   12. Active Alerts Section
    -------------------------------------------------------------------------- */
 .alerts-list {
   display: flex;
@@ -887,10 +1094,10 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   12. Floating WeatherGPT AI Chat Widget (Exact Match to Reference)
+   13. Floating WeatherGPT AI Chat Widget (Exact Match to Reference)
    -------------------------------------------------------------------------- */
 .floating-chat-fab {
-  position: absolute;
+  position: fixed;
   bottom: 86px;
   right: 18px;
   background-color: #FFFFFF;
@@ -903,7 +1110,14 @@ button {
   box-shadow: var(--shadow-float);
   z-index: 1000;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast);
+}
+
+@media (min-width: 1024px) {
+  .floating-chat-fab {
+    bottom: 24px;
+    right: 32px;
+  }
 }
 
 .floating-chat-fab:active {
@@ -927,7 +1141,7 @@ button {
 
 /* Expandable Chat Card */
 .floating-chat-card {
-  position: absolute;
+  position: fixed;
   bottom: 84px;
   right: 14px;
   left: 14px;
@@ -943,6 +1157,15 @@ button {
   flex-direction: column;
   overflow: hidden;
   animation: chatCardPop 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (min-width: 1024px) {
+  .floating-chat-card {
+    left: auto;
+    right: 32px;
+    bottom: 24px;
+    width: 380px;
+  }
 }
 
 .floating-chat-card.hidden {
@@ -1133,7 +1356,6 @@ button {
   height: 13px;
 }
 
-/* Prompt Chips */
 .quick-prompt-chips {
   display: flex;
   gap: 8px;
@@ -1167,7 +1389,6 @@ button {
   border-color: var(--color-brand-blue-border);
 }
 
-/* Message Input Form */
 .chat-input-form {
   display: flex;
   align-items: center;
@@ -1234,7 +1455,7 @@ button {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  transition: transform var(--transition-fast);
 }
 
 .chat-send-btn svg {
@@ -1247,10 +1468,10 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   13. Fixed Bottom Navigation Bar (Exact Match to Reference)
+   14. Bottom Navigation Bar (Mobile Only)
    -------------------------------------------------------------------------- */
-.bottom-nav-bar {
-  position: absolute;
+.mobile-only-bottom-nav {
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -1262,6 +1483,13 @@ button {
   justify-content: space-around;
   padding: 0 12px;
   z-index: 900;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 1024px) {
+  .mobile-only-bottom-nav {
+    display: none !important; /* Fully hidden on desktop */
+  }
 }
 
 .nav-tab-item {
@@ -1283,7 +1511,6 @@ button {
   height: 22px;
 }
 
-/* Active HOME Pill in Reference */
 .nav-tab-item.active .nav-pill-active-bg {
   display: flex;
   align-items: center;
@@ -1320,22 +1547,8 @@ button {
   justify-content: center;
 }
 
-.mobile-gesture-indicator {
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 134px;
-  height: 4px;
-  border-radius: var(--radius-full);
-  background-color: #0F172A;
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 950;
-}
-
 /* --------------------------------------------------------------------------
-   14. Fullscreen Map & Other Tabs Styling
+   15. Standalone Fullscreen Map Tab
    -------------------------------------------------------------------------- */
 .tab-header-bar {
   display: flex;
@@ -1352,7 +1565,7 @@ button {
 
 .fullscreen-map-wrapper {
   width: 100%;
-  height: calc(100% - 70px);
+  height: 75vh;
   border-radius: var(--radius-xl);
   overflow: hidden;
   position: relative;
@@ -1367,7 +1580,7 @@ button {
 
 .radar-playback-toolbar {
   position: absolute;
-  bottom: 86px;
+  bottom: 20px;
   left: 14px;
   right: 14px;
   background-color: rgba(255, 255, 255, 0.95);
@@ -1437,7 +1650,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   15. Alerts Tab & Helplines
+   16. Alerts & Profile Tabs
    -------------------------------------------------------------------------- */
 .helpline-action-bar {
   background-color: #FFF5F5;
@@ -1476,9 +1689,6 @@ button {
   font-weight: 600;
 }
 
-/* --------------------------------------------------------------------------
-   16. Profile Tab & Settings Blocks
-   -------------------------------------------------------------------------- */
 .settings-card-group {
   background-color: var(--color-card-bg);
   border-radius: var(--radius-xl);
@@ -1615,16 +1825,14 @@ button {
    17. Bottom Sheets & Modals
    -------------------------------------------------------------------------- */
 .bottom-sheet-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(6px);
   z-index: 2000;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
   animation: sheetFade 200ms ease-out forwards;
 }
 
@@ -1639,6 +1847,7 @@ button {
 
 .bottom-sheet-card {
   width: 100%;
+  max-width: 600px;
   background-color: #FFFFFF;
   border-radius: 26px 26px 0 0;
   padding: 20px;
@@ -1703,7 +1912,6 @@ button {
   color: var(--color-text-secondary);
 }
 
-/* Place Insights Metrics Grid */
 .place-metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1762,11 +1970,6 @@ button {
   transition: transform var(--transition-fast);
 }
 
-.btn-ask-about-place:active {
-  transform: scale(0.98);
-}
-
-/* Alert Action Checklist */
 .checklist-items {
   list-style: none;
   margin: 12px 0 18px 0;
@@ -1809,7 +2012,6 @@ button {
   font-weight: 700;
 }
 
-/* City Pick List */
 .quick-cities-list {
   display: flex;
   flex-direction: column;
@@ -1833,7 +2035,7 @@ button {
 
 /* 2G USSD Retro Phone Simulator */
 .modal-overlay {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(8px);
@@ -1859,7 +2061,7 @@ button {
   border: 3px solid #064E3B;
   border-radius: 12px;
   padding: 12px;
-  font-family: 'JetBrains Mono', monospace, monospace;
+  font-family: 'JetBrains Mono', monospace;
   color: #34D399;
   font-size: 0.78rem;
   min-height: 140px;

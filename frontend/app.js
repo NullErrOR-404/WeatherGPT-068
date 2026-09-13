@@ -32,10 +32,13 @@
   // Maps
   let homeMiniMap = null;
   let fullMap = null;
+  let desktopMap = null;
   let miniRadarLayer = null;
   let fullRadarLayer = null;
+  let desktopRadarLayer = null;
   let miniLocationMarker = null;
   let fullLocationMarker = null;
+  let desktopLocationMarker = null;
 
   // Vernacular Role Display Dictionary
   const ROLE_NAMES = {
@@ -84,6 +87,15 @@
       });
     });
 
+    // Desktop Header Navigation Links
+    const desktopTabButtons = document.querySelectorAll('.desktop-nav-btn');
+    desktopTabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetTabId = btn.getAttribute('data-tab');
+        switchTab(targetTabId);
+      });
+    });
+
     // Expand Map Button on Home Card
     const btnExpandMap = document.getElementById('btn-expand-live-map');
     if (btnExpandMap) {
@@ -122,16 +134,31 @@
       }
     });
 
+    // Update Desktop Header Nav Buttons
+    document.querySelectorAll('.desktop-nav-btn').forEach((btn) => {
+      if (btn.getAttribute('data-tab') === tabId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
     // Invalidate Leaflet map size on switch to ensure crisp tiles
     if (tabId === 'tab-map' && fullMap) {
       setTimeout(() => {
         fullMap.invalidateSize();
         fullMap.setView([state.lat, state.lon], 9);
       }, 150);
-    } else if (tabId === 'tab-home' && homeMiniMap) {
+    } else if (tabId === 'tab-home') {
       setTimeout(() => {
-        homeMiniMap.invalidateSize();
-        homeMiniMap.setView([state.lat, state.lon], 8);
+        if (homeMiniMap) {
+          homeMiniMap.invalidateSize();
+          homeMiniMap.setView([state.lat, state.lon], 8);
+        }
+        if (desktopMap) {
+          desktopMap.invalidateSize();
+          desktopMap.setView([state.lat, state.lon], 9);
+        }
       }, 150);
     }
   }
@@ -145,11 +172,11 @@
       return;
     }
 
-    const mapTileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    const mapTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     const tileOptions = {
       maxZoom: 18,
-      subdomains: 'abcd',
-      attribution: '&copy; CartoDB &copy; OpenStreetMap',
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; OpenStreetMap contributors',
     };
 
     // 1. Home Mini Map Preview
@@ -199,18 +226,43 @@
       });
     }
 
+    // 3. Desktop Persistent Live Doppler Radar & Satellite Map
+    const desktopMapEl = document.getElementById('desktop-live-map');
+    if (desktopMapEl) {
+      desktopMap = L.map('desktop-live-map', {
+        center: [state.lat, state.lon],
+        zoom: 8,
+        zoomControl: true,
+      });
+
+      L.tileLayer(mapTileUrl, tileOptions).addTo(desktopMap);
+
+      desktopLocationMarker = L.marker([state.lat, state.lon]).addTo(desktopMap);
+      desktopLocationMarker.bindPopup(`<strong>${state.city}</strong><br>Current Location`);
+
+      desktopMap.on('click', (e) => {
+        handleMapClickInsights(e.latlng.lat, e.latlng.lng);
+      });
+    }
+
     // Fetch Live Radar / Satellite Tiles from RainViewer API
     fetchRainViewerRadarTimestamps();
 
-    // Map Recenter Button
+    // Map Recenter Buttons (Fullscreen & Desktop)
     const btnRecenter = document.getElementById('btn-recenter-map');
     if (btnRecenter) {
       btnRecenter.addEventListener('click', () => {
         if (fullMap) fullMap.setView([state.lat, state.lon], 10);
       });
     }
+    const btnDesktopRecenter = document.getElementById('btn-desktop-recenter');
+    if (btnDesktopRecenter) {
+      btnDesktopRecenter.addEventListener('click', () => {
+        if (desktopMap) desktopMap.setView([state.lat, state.lon], 8);
+      });
+    }
 
-    // Layer Select Dropdowns
+    // Layer Select Dropdowns (Home, Fullscreen, Desktop)
     const homeLayerSelect = document.getElementById('home-map-layer-select');
     if (homeLayerSelect) {
       homeLayerSelect.addEventListener('change', (e) => {
@@ -225,10 +277,21 @@
       });
     }
 
-    // Radar Play/Pause Button
+    const desktopLayerSelect = document.getElementById('desktop-map-layer-select');
+    if (desktopLayerSelect) {
+      desktopLayerSelect.addEventListener('change', (e) => {
+        updateMapOverlayLayer(e.target.value);
+      });
+    }
+
+    // Radar Play/Pause Buttons
     const btnRadarPlay = document.getElementById('btn-radar-play');
     if (btnRadarPlay) {
       btnRadarPlay.addEventListener('click', toggleRadarPlayback);
+    }
+    const btnDesktopRadarPlay = document.getElementById('btn-desktop-radar-play');
+    if (btnDesktopRadarPlay) {
+      btnDesktopRadarPlay.addEventListener('click', toggleRadarPlayback);
     }
   }
 
@@ -263,12 +326,18 @@
       fullRadarLayer = L.tileLayer(radarTileUrl, { opacity: 0.7, zIndex: 100 }).addTo(fullMap);
     }
 
-    // Update timestamp label
-    const tsLabel = document.getElementById('radar-timestamp-label');
-    if (tsLabel) {
-      const now = new Date();
-      tsLabel.textContent = `Doppler Radar • Live (${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+    if (desktopMap) {
+      if (desktopRadarLayer) desktopMap.removeLayer(desktopRadarLayer);
+      desktopRadarLayer = L.tileLayer(radarTileUrl, { opacity: 0.7, zIndex: 100 }).addTo(desktopMap);
     }
+
+    // Update timestamp labels
+    const now = new Date();
+    const timeText = `Doppler Radar • Live (${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+    const tsLabel = document.getElementById('radar-timestamp-label');
+    if (tsLabel) tsLabel.textContent = timeText;
+    const desktopTsLabel = document.getElementById('desktop-timestamp-label');
+    if (desktopTsLabel) desktopTsLabel.textContent = timeText;
   }
 
   function applySyntheticPrecipitationOverlay() {
@@ -291,28 +360,41 @@
         stroke: false,
       }).addTo(fullMap);
     }
+    if (desktopMap) {
+      L.circle([state.lat + 0.1, state.lon - 0.08], {
+        radius: 14000,
+        color: '#0066FF',
+        fillColor: '#38BDF8',
+        fillOpacity: 0.45,
+        stroke: false,
+      }).addTo(desktopMap);
+    }
   }
 
   function toggleRadarPlayback() {
     const playIcon = document.getElementById('radar-play-icon');
+    const desktopPlayIcon = document.getElementById('desktop-play-icon');
+
     if (state.isRadarPlaying) {
       clearInterval(state.radarPlayTimer);
       state.isRadarPlaying = false;
       if (playIcon) playIcon.textContent = '▶';
+      if (desktopPlayIcon) desktopPlayIcon.textContent = '▶';
     } else {
       if (!state.radarTimestamps || state.radarTimestamps.length === 0) return;
       state.isRadarPlaying = true;
       if (playIcon) playIcon.textContent = '⏸';
+      if (desktopPlayIcon) desktopPlayIcon.textContent = '⏸';
 
       state.radarPlayTimer = setInterval(() => {
         state.currentRadarIndex = (state.currentRadarIndex + 1) % state.radarTimestamps.length;
         applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
 
+        const pct = ((state.currentRadarIndex + 1) / state.radarTimestamps.length) * 100;
         const progress = document.getElementById('radar-playback-progress');
-        if (progress) {
-          const pct = ((state.currentRadarIndex + 1) / state.radarTimestamps.length) * 100;
-          progress.style.width = `${pct}%`;
-        }
+        if (progress) progress.style.width = `${pct}%`;
+        const desktopProgress = document.getElementById('desktop-playback-progress');
+        if (desktopProgress) desktopProgress.style.width = `${pct}%`;
       }, 750);
     }
   }
@@ -324,8 +406,14 @@
         fullMap.removeLayer(fullRadarLayer);
         fullRadarLayer = L.tileLayer(satUrl, { opacity: 0.7 }).addTo(fullMap);
       }
+      if (desktopRadarLayer && desktopMap) {
+        desktopMap.removeLayer(desktopRadarLayer);
+        desktopRadarLayer = L.tileLayer(satUrl, { opacity: 0.7 }).addTo(desktopMap);
+      }
       const label = document.getElementById('radar-timestamp-label');
       if (label) label.textContent = 'INSAT-3DS Satellite Clouds Feed';
+      const dLabel = document.getElementById('desktop-timestamp-label');
+      if (dLabel) dLabel.textContent = 'INSAT-3DS Satellite Clouds Feed';
     } else {
       if (state.radarTimestamps.length > 0) {
         applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
@@ -718,6 +806,10 @@
         if (fullMap) {
           fullMap.setView([state.lat, state.lon], 9);
           if (fullLocationMarker) fullLocationMarker.setLatLng([state.lat, state.lon]);
+        }
+        if (desktopMap) {
+          desktopMap.setView([state.lat, state.lon], 8);
+          if (desktopLocationMarker) desktopLocationMarker.setLatLng([state.lat, state.lon]);
         }
       });
     });

@@ -17,269 +17,305 @@
 </head>
 <body>
 
-  <!-- Ambient Backdrop Shell for Desktop Viewports -->
-  <div class="desktop-backdrop">
+  <!-- Clean Full-Width Responsive Container (Zero Fake Phone Bezels) -->
+  <div class="app-container" id="app-root">
 
-    <!-- Mobile Device Chassis Container -->
-    <main class="mobile-device-chassis" id="app-root">
+    <!-- Top App Navigation Header -->
+    <header class="app-header">
+      <div class="brand-group">
+        <h1 class="brand-title">Weather<span class="brand-highlight">GPT</span></h1>
+        <span class="gov-pill-tag">Govt of India • MoES</span>
+      </div>
+
+      <!-- Desktop Nav Tab Links (Visible on Large Screens) -->
+      <nav class="desktop-nav-links" aria-label="Desktop Navigation">
+        <button class="desktop-nav-btn active" data-tab="tab-home">
+          <svg class="dnav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="desktop-nav-btn" data-tab="tab-map">
+          <svg class="dnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
+          <span>Full Radar &amp; Satellite</span>
+        </button>
+        <button class="desktop-nav-btn" data-tab="tab-alerts">
+          <svg class="dnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span>Disaster Alerts</span>
+          <span class="desktop-badge-dot"></span>
+        </button>
+        <button class="desktop-nav-btn" data-tab="tab-profile">
+          <svg class="dnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Citizen Tools &amp; 2G</span>
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button id="btn-notifications" class="icon-action-btn" aria-label="Notifications" title="Disaster Notifications">
+          <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="unread-dot" id="header-unread-dot"></span>
+        </button>
+        <button id="btn-lang-dropdown" class="lang-pill-btn" aria-label="Change Language">
+          <span id="current-lang-label">EN</span>
+          <svg class="chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Flow -->
+    <main class="app-main-flow">
 
       <!-- ========================================================================= -->
-      <!-- TAB 1: HOME (Exact Match to Reference Design)                             -->
+      <!-- TAB 1: HOME (Dual-Column Desktop / Exact Match Mobile)                     -->
       <!-- ========================================================================= -->
       <div id="tab-home" class="view-tab active">
         
-        <!-- Top App Header -->
-        <header class="app-header">
-          <div class="brand-group">
-            <h1 class="brand-title">Weather<span class="brand-highlight">GPT</span></h1>
-          </div>
-          <div class="header-actions">
-            <button id="btn-notifications" class="icon-action-btn" aria-label="Notifications" title="Disaster Notifications">
-              <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <span class="unread-dot" id="header-unread-dot"></span>
-            </button>
-            <button id="btn-lang-dropdown" class="lang-pill-btn" aria-label="Change Language">
-              <span id="current-lang-label">EN</span>
-              <svg class="chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </button>
-          </div>
-        </header>
+        <div class="home-dual-grid">
 
-        <!-- Location & Risk Row -->
-        <section class="location-risk-row">
-          <button class="location-picker-trigger" id="btn-open-location-picker" title="Change Location or Role">
-            <div class="loc-icon-bubble">
-              <svg class="loc-pin-svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
-            </div>
-            <div class="loc-details">
-              <div class="loc-name-wrap">
-                <span class="loc-name" id="display-location-name">Chennai, Tamil Nadu</span>
-                <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-              <span class="loc-subtext" id="display-location-role">Your current location</span>
-            </div>
-          </button>
+          <!-- Left Column: Primary Weather Dashboard (Matching Reference Design) -->
+          <div class="home-feed-column">
 
-          <!-- Risk Score Gauge Badge -->
-          <div class="risk-gauge-card" id="btn-explain-risk" title="Explainable Risk Score (TreeSHAP factors)">
-            <div class="risk-label-group">
-              <span class="risk-shield-icon" id="risk-shield-icon">🛡️</span>
-              <span class="risk-level-text" id="risk-level-text">Low Risk</span>
-            </div>
-            <div class="gauge-ring-wrap">
-              <svg class="gauge-svg" viewBox="0 0 36 36">
-                <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path id="gauge-fill-arc" class="gauge-fill" stroke-dasharray="20, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-              </svg>
-              <div class="gauge-num-text">
-                <span class="num" id="risk-score-num">20</span>
-                <span class="total">/100</span>
-              </div>
-            </div>
-          </div>
-        </section>
+            <!-- Location & Risk Row -->
+            <section class="location-risk-row">
+              <button class="location-picker-trigger" id="btn-open-location-picker" title="Change Location or Role">
+                <div class="loc-icon-bubble">
+                  <svg class="loc-pin-svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                </div>
+                <div class="loc-details">
+                  <div class="loc-name-wrap">
+                    <span class="loc-name" id="display-location-name">Chennai, Tamil Nadu</span>
+                    <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                  <span class="loc-subtext" id="display-location-role">Your current location</span>
+                </div>
+              </button>
 
-        <!-- Hero Weather Card -->
-        <section class="hero-weather-card" id="hero-weather-card">
-          <div class="hero-top-row">
-            <div class="hero-condition-lead">
-              <div class="hero-weather-icon-wrap" id="hero-weather-icon">
-                <!-- Tactile 3D Weather Icon -->
-                <div class="tactile-sun-cloud" aria-hidden="true">
-                  <span class="sun-sphere"></span>
-                  <span class="cloud-puff puff-1"></span>
-                  <span class="cloud-puff puff-2"></span>
+              <!-- Risk Score Gauge Badge -->
+              <div class="risk-gauge-card" id="btn-explain-risk" title="Explainable Risk Score (TreeSHAP factors)">
+                <div class="risk-label-group">
+                  <span class="risk-shield-icon" id="risk-shield-icon">🛡️</span>
+                  <span class="risk-level-text" id="risk-level-text">Low Risk</span>
+                </div>
+                <div class="gauge-ring-wrap">
+                  <svg class="gauge-svg" viewBox="0 0 36 36">
+                    <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path id="gauge-fill-arc" class="gauge-fill" stroke-dasharray="20, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <div class="gauge-num-text">
+                    <span class="num" id="risk-score-num">20</span>
+                    <span class="total">/100</span>
+                  </div>
                 </div>
               </div>
-              <div class="hero-temp-group">
-                <div class="hero-temp" id="hero-temp-val">32°C</div>
-                <div class="hero-condition" id="hero-condition-text">Partly Cloudy</div>
-                <div class="hero-feels-like" id="hero-feels-like-text">Feels like 36°C</div>
-              </div>
-            </div>
+            </section>
 
-            <div class="hero-sun-cycle">
-              <div class="sun-cycle-item">
-                <div class="sun-icon-symbol sunrise">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l-3-3m3 3l3-3M4.93 10.93l4.24 4.24M19.07 10.93l-4.24 4.24M2 18h20M7 18a5 5 0 0 1 10 0"/></svg>
+            <!-- Hero Weather Card -->
+            <section class="hero-weather-card" id="hero-weather-card">
+              <div class="hero-top-row">
+                <div class="hero-condition-lead">
+                  <div class="hero-weather-icon-wrap" id="hero-weather-icon">
+                    <!-- Tactile 3D Weather Icon -->
+                    <div class="tactile-sun-cloud" aria-hidden="true">
+                      <span class="sun-sphere"></span>
+                      <span class="cloud-puff puff-1"></span>
+                      <span class="cloud-puff puff-2"></span>
+                    </div>
+                  </div>
+                  <div class="hero-temp-group">
+                    <div class="hero-temp" id="hero-temp-val">32°C</div>
+                    <div class="hero-condition" id="hero-condition-text">Partly Cloudy</div>
+                    <div class="hero-feels-like" id="hero-feels-like-text">Feels like 36°C</div>
+                  </div>
                 </div>
-                <div class="sun-cycle-meta">
-                  <span class="sun-cycle-label">Sunrise</span>
-                  <span class="sun-cycle-time" id="val-sunrise">5:51 AM</span>
+
+                <div class="hero-sun-cycle">
+                  <div class="sun-cycle-item">
+                    <div class="sun-icon-symbol sunrise">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l-3-3m3 3l3-3M4.93 10.93l4.24 4.24M19.07 10.93l-4.24 4.24M2 18h20M7 18a5 5 0 0 1 10 0"/></svg>
+                    </div>
+                    <div class="sun-cycle-meta">
+                      <span class="sun-cycle-label">Sunrise</span>
+                      <span class="sun-cycle-time" id="val-sunrise">5:51 AM</span>
+                    </div>
+                  </div>
+                  <div class="sun-cycle-item">
+                    <div class="sun-icon-symbol sunset">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V2m0 6l-3-3m3 3l3-3M4.93 10.93l4.24 4.24M19.07 10.93l-4.24 4.24M2 18h20M7 18a5 5 0 0 1 10 0"/></svg>
+                    </div>
+                    <div class="sun-cycle-meta">
+                      <span class="sun-cycle-label">Sunset</span>
+                      <span class="sun-cycle-time" id="val-sunset">6:22 PM</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="sun-cycle-item">
-                <div class="sun-icon-symbol sunset">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V2m0 6l-3-3m3 3l3-3M4.93 10.93l4.24 4.24M19.07 10.93l-4.24 4.24M2 18h20M7 18a5 5 0 0 1 10 0"/></svg>
+
+              <!-- 4-Column Atmospheric Telemetry Strip -->
+              <div class="hero-metrics-strip">
+                <div class="metric-col">
+                  <div class="metric-icon-wrap blue-tint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                  </div>
+                  <span class="metric-title">Humidity</span>
+                  <span class="metric-value" id="val-humidity">68%</span>
                 </div>
-                <div class="sun-cycle-meta">
-                  <span class="sun-cycle-label">Sunset</span>
-                  <span class="sun-cycle-time" id="val-sunset">6:22 PM</span>
+
+                <div class="metric-col">
+                  <div class="metric-icon-wrap cyan-tint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                  </div>
+                  <span class="metric-title">Wind</span>
+                  <span class="metric-value" id="val-wind">18 km/h</span>
+                  <span class="metric-sub" id="val-wind-dir">SE</span>
+                </div>
+
+                <div class="metric-col">
+                  <div class="metric-icon-wrap indigo-tint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M8 19v2m4-2v2m4-2v2"/></svg>
+                  </div>
+                  <span class="metric-title">Precipitation</span>
+                  <span class="metric-value" id="val-precipitation">10%</span>
+                </div>
+
+                <div class="metric-col">
+                  <div class="metric-icon-wrap amber-tint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                  </div>
+                  <span class="metric-title">UV Index</span>
+                  <span class="metric-value" id="val-uv">7</span>
+                  <span class="metric-sub alert-txt" id="val-uv-desc">High</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Hourly Forecast Horizontal Carousel -->
+            <section class="section-card-block">
+              <div class="section-header">
+                <h2 class="section-title">Hourly Forecast</h2>
+                <button class="section-link-btn" id="btn-view-more-hourly">View More <span class="arrow-sym">&gt;</span></button>
+              </div>
+              <div class="hourly-forecast-scroll" id="hourly-forecast-container">
+                <div class="hourly-card active"><span class="hourly-time">Now</span><span class="hourly-icon">⛅</span><span class="hourly-temp">32°</span></div>
+                <div class="hourly-card"><span class="hourly-time">1 PM</span><span class="hourly-icon">☀️</span><span class="hourly-temp">33°</span></div>
+                <div class="hourly-card"><span class="hourly-time">4 PM</span><span class="hourly-icon">⛅</span><span class="hourly-temp">32°</span></div>
+                <div class="hourly-card"><span class="hourly-time">7 PM</span><span class="hourly-icon">☁️</span><span class="hourly-temp">30°</span></div>
+                <div class="hourly-card"><span class="hourly-time">10 PM</span><span class="hourly-icon">🌤️</span><span class="hourly-temp">28°</span></div>
+                <div class="hourly-card"><span class="hourly-time">1 AM</span><span class="hourly-icon">🌙</span><span class="hourly-temp">27°</span></div>
+              </div>
+            </section>
+
+            <!-- Mobile-Only Live Weather Map Preview (Rendered on mobile, hidden on desktop dual-grid) -->
+            <section class="section-card-block mobile-only-map-block">
+              <div class="section-header">
+                <h2 class="section-title">Live Weather Map</h2>
+                <div class="map-header-controls">
+                  <div class="layer-pill-select-wrapper">
+                    <select id="home-map-layer-select" class="layer-select" aria-label="Select Map Layer">
+                      <option value="radar" selected>Rainfall (mm) ▾</option>
+                      <option value="satellite">Satellite (Clouds) ▾</option>
+                      <option value="wind">Wind Speed ▾</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="map-card-viewport">
+                <div id="home-mini-map" class="home-mini-map" aria-label="Interactive Weather Doppler Radar Map"></div>
+                <button id="btn-expand-live-map" class="map-expand-fab" aria-label="Enlarge Live Weather Map" title="Enlarge Live Map">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                </button>
+                <div class="map-click-hint-badge"><span>Tap any location for instant insights</span></div>
+              </div>
+            </section>
+
+            <!-- Active Alerts Section -->
+            <section class="section-card-block">
+              <div class="section-header">
+                <h2 class="section-title">Active Alerts</h2>
+              </div>
+              <div class="alerts-list" id="home-alerts-list">
+                <div class="alert-card alert-high" data-alert-id="rain-high" role="button" tabindex="0">
+                  <div class="alert-icon-pill red">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.45l8.28 14.55H3.72L12 5.45zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                  </div>
+                  <div class="alert-body">
+                    <div class="alert-title-row">
+                      <h3 class="alert-title">Heavy Rainfall Alert</h3>
+                      <span class="severity-badge badge-high">High</span>
+                    </div>
+                    <p class="alert-desc">Chennai and nearby districts may receive heavy rain today evening. Be prepared.</p>
+                  </div>
+                </div>
+
+                <div class="alert-card alert-moderate" data-alert-id="wind-mod" role="button" tabindex="0">
+                  <div class="alert-icon-pill amber">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                  </div>
+                  <div class="alert-body">
+                    <div class="alert-title-row">
+                      <h3 class="alert-title">Strong Wind Advisory</h3>
+                      <span class="severity-badge badge-moderate">Moderate</span>
+                    </div>
+                    <p class="alert-desc">Wind speed may reach 40–50 km/h along coastal routes. Exercise caution.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          <!-- Right Column: Desktop Persistent Live Doppler Radar & Satellite Viewport -->
+          <div class="desktop-radar-column">
+            <div class="desktop-radar-card">
+              <div class="desktop-radar-header">
+                <div class="radar-titles">
+                  <span class="radar-live-badge"><span class="radar-pulse-dot"></span> LIVE SATELLITE &amp; DOPPLER RADAR</span>
+                  <h2 class="radar-main-title">National Meteorological Radar Grid</h2>
+                  <p class="radar-sub-text">Continuous atmospheric sensing • Click any region for instant hyperlocal insights</p>
+                </div>
+                <div class="desktop-layer-controls">
+                  <select id="desktop-map-layer-select" class="layer-select" aria-label="Select Radar Layer">
+                    <option value="radar" selected>🌧️ Rainfall Radar ▾</option>
+                    <option value="satellite">🛰️ INSAT-3DS Satellite Clouds ▾</option>
+                    <option value="wind">💨 Wind Flow ▾</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Desktop Map Container -->
+              <div class="desktop-map-viewport">
+                <div id="desktop-live-map" class="desktop-live-map" aria-label="Desktop Live Weather Map"></div>
+                
+                <!-- Radar Loop Toolbar -->
+                <div class="desktop-radar-toolbar">
+                  <button id="btn-desktop-radar-play" class="playback-btn" aria-label="Play radar loop">
+                    <span id="desktop-play-icon">▶</span>
+                  </button>
+                  <div class="playback-timeline-wrap">
+                    <span class="playback-time-label" id="desktop-timestamp-label">Doppler Radar • Live Feed</span>
+                    <div class="playback-bar"><div class="playback-progress" id="desktop-playback-progress"></div></div>
+                  </div>
+                  <button id="btn-desktop-recenter" class="recenter-btn" title="Recenter map to your location">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+
+                <div class="desktop-map-hint">
+                  <span>💡 Tip: Click anywhere on the map to trigger instant dynamic weather insights for that district</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 4-Column Atmospheric Telemetry Strip -->
-          <div class="hero-metrics-strip">
-            <div class="metric-col">
-              <div class="metric-icon-wrap blue-tint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-              </div>
-              <span class="metric-title">Humidity</span>
-              <span class="metric-value" id="val-humidity">68%</span>
-            </div>
+        </div>
 
-            <div class="metric-col">
-              <div class="metric-icon-wrap cyan-tint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
-              </div>
-              <span class="metric-title">Wind</span>
-              <span class="metric-value" id="val-wind">18 km/h</span>
-              <span class="metric-sub" id="val-wind-dir">SE</span>
-            </div>
-
-            <div class="metric-col">
-              <div class="metric-icon-wrap indigo-tint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M8 19v2m4-2v2m4-2v2"/></svg>
-              </div>
-              <span class="metric-title">Precipitation</span>
-              <span class="metric-value" id="val-precipitation">10%</span>
-            </div>
-
-            <div class="metric-col">
-              <div class="metric-icon-wrap amber-tint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-              </div>
-              <span class="metric-title">UV Index</span>
-              <span class="metric-value" id="val-uv">7</span>
-              <span class="metric-sub alert-txt" id="val-uv-desc">High</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Hourly Forecast Horizontal Carousel -->
-        <section class="section-card-block">
-          <div class="section-header">
-            <h2 class="section-title">Hourly Forecast</h2>
-            <button class="section-link-btn" id="btn-view-more-hourly">View More <span class="arrow-sym">&gt;</span></button>
-          </div>
-          <div class="hourly-forecast-scroll" id="hourly-forecast-container">
-            <!-- Populated dynamically by app.js -->
-            <div class="hourly-card active">
-              <span class="hourly-time">Now</span>
-              <span class="hourly-icon">⛅</span>
-              <span class="hourly-temp">32°</span>
-            </div>
-            <div class="hourly-card">
-              <span class="hourly-time">1 PM</span>
-              <span class="hourly-icon">☀️</span>
-              <span class="hourly-temp">33°</span>
-            </div>
-            <div class="hourly-card">
-              <span class="hourly-time">4 PM</span>
-              <span class="hourly-icon">⛅</span>
-              <span class="hourly-temp">32°</span>
-            </div>
-            <div class="hourly-card">
-              <span class="hourly-time">7 PM</span>
-              <span class="hourly-icon">☁️</span>
-              <span class="hourly-temp">30°</span>
-            </div>
-            <div class="hourly-card">
-              <span class="hourly-time">10 PM</span>
-              <span class="hourly-icon">🌤️</span>
-              <span class="hourly-temp">28°</span>
-            </div>
-            <div class="hourly-card">
-              <span class="hourly-time">1 AM</span>
-              <span class="hourly-icon">🌙</span>
-              <span class="hourly-temp">27°</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Live Weather Map Card -->
-        <section class="section-card-block">
-          <div class="section-header">
-            <h2 class="section-title">Live Weather Map</h2>
-            <div class="map-header-controls">
-              <div class="layer-pill-select-wrapper">
-                <select id="home-map-layer-select" class="layer-select" aria-label="Select Map Layer">
-                  <option value="radar" selected>Rainfall (mm) ▾</option>
-                  <option value="satellite">Satellite (Clouds) ▾</option>
-                  <option value="wind">Wind Speed ▾</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Embedded Leaflet Mini Radar Container -->
-          <div class="map-card-viewport">
-            <div id="home-mini-map" class="home-mini-map" aria-label="Interactive Weather Doppler Radar Map"></div>
-            <!-- Floating Fullscreen Expand Button -->
-            <button id="btn-expand-live-map" class="map-expand-fab" aria-label="Enlarge Live Weather Map" title="Enlarge Live Map">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <polyline points="9 21 3 21 3 15"></polyline>
-                <line x1="21" y1="3" x2="14" y2="10"></line>
-                <line x1="3" y1="21" x2="10" y2="14"></line>
-              </svg>
-            </button>
-            <div class="map-click-hint-badge">
-              <span>Tap any location for instant insights</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Active Alerts Section -->
-        <section class="section-card-block">
-          <div class="section-header">
-            <h2 class="section-title">Active Alerts</h2>
-          </div>
-          <div class="alerts-list" id="home-alerts-list">
-            <!-- High Rainfall Warning -->
-            <div class="alert-card alert-high" data-alert-id="rain-high" role="button" tabindex="0">
-              <div class="alert-icon-pill red">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.45l8.28 14.55H3.72L12 5.45zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
-              </div>
-              <div class="alert-body">
-                <div class="alert-title-row">
-                  <h3 class="alert-title">Heavy Rainfall Alert</h3>
-                  <span class="severity-badge badge-high">High</span>
-                </div>
-                <p class="alert-desc">Chennai and nearby districts may receive heavy rain today evening. Be prepared.</p>
-              </div>
-            </div>
-
-            <!-- Strong Wind Advisory -->
-            <div class="alert-card alert-moderate" data-alert-id="wind-mod" role="button" tabindex="0">
-              <div class="alert-icon-pill amber">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-              </div>
-              <div class="alert-body">
-                <div class="alert-title-row">
-                  <h3 class="alert-title">Strong Wind Advisory</h3>
-                  <span class="severity-badge badge-moderate">Moderate</span>
-                </div>
-                <p class="alert-desc">Wind speed may reach 40–50 km/h along coastal routes. Exercise caution.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Safe Bottom Spacing to ensure full scroll over bottom nav -->
         <div class="scroll-bottom-cushion"></div>
-
       </div>
 
       <!-- ========================================================================= -->
-      <!-- TAB 2: FULLSCREEN MAP (Interactive Doppler & Live Satellite)             -->
+      <!-- TAB 2: FULLSCREEN MAP (Standalone View for Full Screen Inspection)         -->
       <!-- ========================================================================= -->
       <div id="tab-map" class="view-tab">
         <header class="tab-header-bar">
@@ -294,7 +330,6 @@
         </header>
         <div class="fullscreen-map-wrapper">
           <div id="fullscreen-map-canvas" class="fullscreen-map-canvas"></div>
-          <!-- Live Radar Player Control Bar -->
           <div class="radar-playback-toolbar">
             <button id="btn-radar-play" class="playback-btn" aria-label="Play radar animation">
               <span id="radar-play-icon">▶</span>
@@ -319,8 +354,6 @@
           <span class="status-indicator-chip" id="alerts-count-chip">2 Active</span>
         </header>
         <div class="tab-content-scroller">
-          
-          <!-- Helplines Quick Access Bar -->
           <div class="helpline-action-bar">
             <div class="helpline-title-block">
               <span class="helpline-icon">🚨</span>
@@ -335,11 +368,7 @@
               <a href="tel:1077" class="helpline-pill-btn"><strong>1077</strong> District Relief Control</a>
             </div>
           </div>
-
-          <!-- Comprehensive Alerts List -->
-          <div class="full-alerts-list" id="full-alerts-list">
-            <!-- Populated dynamically by app.js -->
-          </div>
+          <div class="full-alerts-list" id="full-alerts-list"></div>
         </div>
       </div>
 
@@ -351,8 +380,6 @@
           <h2 class="tab-page-title">Citizen Preferences &amp; Tools</h2>
         </header>
         <div class="tab-content-scroller">
-          
-          <!-- Role Selection Block -->
           <div class="settings-card-group">
             <div class="settings-group-header">
               <h3 class="settings-group-title">What best describes you?</h3>
@@ -361,36 +388,23 @@
             <div class="role-cards-grid">
               <button class="role-card active" data-role="farmer">
                 <span class="role-emoji">🌾</span>
-                <div class="role-texts">
-                  <strong>Agriculture &amp; Farmer</strong>
-                  <span>Crop spray timing, APMC Mandi rain protection</span>
-                </div>
+                <div class="role-texts"><strong>Agriculture &amp; Farmer</strong><span>Crop spray timing, APMC Mandi rain protection</span></div>
               </button>
               <button class="role-card" data-role="marine">
                 <span class="role-emoji">⛵</span>
-                <div class="role-texts">
-                  <strong>Coastal &amp; Fishing</strong>
-                  <span>Swell waves, 3nm international border sirens</span>
-                </div>
+                <div class="role-texts"><strong>Coastal &amp; Fishing</strong><span>Swell waves, 3nm international border sirens</span></div>
               </button>
               <button class="role-card" data-role="commuter">
                 <span class="role-emoji">🚗</span>
-                <div class="role-texts">
-                  <strong>Daily City Commuter</strong>
-                  <span>Subway flood routing, monsoon rail alerts</span>
-                </div>
+                <div class="role-texts"><strong>Daily City Commuter</strong><span>Subway flood routing, monsoon rail alerts</span></div>
               </button>
               <button class="role-card" data-role="citizen">
                 <span class="role-emoji">🏠</span>
-                <div class="role-texts">
-                  <strong>Everyday Citizen</strong>
-                  <span>General weather, UV safety, outdoor planning</span>
-                </div>
+                <div class="role-texts"><strong>Everyday Citizen</strong><span>General weather, UV safety, outdoor planning</span></div>
               </button>
             </div>
           </div>
 
-          <!-- Language Selector Block -->
           <div class="settings-card-group">
             <div class="settings-group-header">
               <h3 class="settings-group-title">Preferred Language</h3>
@@ -405,7 +419,6 @@
             </div>
           </div>
 
-          <!-- 2G Feature Phone Simulator & Offline Mesh Tools -->
           <div class="settings-card-group">
             <div class="settings-group-header">
               <h3 class="settings-group-title">Inclusive 2G &amp; Offline Systems</h3>
@@ -414,22 +427,15 @@
             <div class="tools-action-row">
               <button id="btn-launch-ussd" class="tool-action-card">
                 <span class="tool-icon">📟</span>
-                <div>
-                  <strong>2G USSD (*99*68#) Keypad</strong>
-                  <span>Simulate telecom weather service on button phones</span>
-                </div>
+                <div><strong>2G USSD (*99*68#) Keypad</strong><span>Simulate telecom weather service on button phones</span></div>
               </button>
               <button id="btn-sync-offline-mesh" class="tool-action-card">
                 <span class="tool-icon">📡</span>
-                <div>
-                  <strong>PRITHVI-Mesh Offline Cache</strong>
-                  <span>Download 72h offline meteorological emergency bundle</span>
-                </div>
+                <div><strong>PRITHVI-Mesh Offline Cache</strong><span>Download 72h offline meteorological emergency bundle</span></div>
               </button>
             </div>
           </div>
 
-          <!-- Government Statutory Compliance Note -->
           <div class="statutory-note-box">
             <p><strong>Government of India • Ministry of Earth Sciences (MoES)</strong></p>
             <p>Aligned with Mission Mausam (2024–2026) &bull; Problem Statement PS26068</p>
@@ -440,150 +446,111 @@
         </div>
       </div>
 
-      <!-- ========================================================================= -->
-      <!-- FLOATING WEATHERGPT AI CHAT WIDGET (Matches Reference Exactly)            -->
-      <!-- ========================================================================= -->
-      
-      <!-- Collapsed Floating Action Button -->
-      <button id="btn-open-chat-fab" class="floating-chat-fab" aria-label="Open WeatherGPT AI Chat">
-        <span class="chat-fab-avatar">🤖</span>
-        <span class="chat-fab-label">Weather<strong class="brand-blue">GPT</strong> AI</span>
-      </button>
+    </main>
 
-      <!-- Expandable Floating Chat Window -->
-      <div id="floating-chat-card" class="floating-chat-card hidden" role="dialog" aria-label="WeatherGPT AI Assistant">
-        <!-- Chat Card Header -->
-        <div class="chat-card-header">
-          <div class="chat-bot-identity">
-            <div class="chat-avatar-bubble">
-              <svg viewBox="0 0 24 24" fill="#0066FF" class="bot-svg-icon"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM7.5 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm9 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>
-            </div>
-            <div class="chat-name-wrap">
-              <span class="chat-name-title">Weather<strong class="brand-blue">GPT</strong> AI</span>
-              <span class="chat-status-pill"><span class="status-dot-green"></span> Online</span>
-            </div>
+    <!-- ========================================================================= -->
+    <!-- FLOATING WEATHERGPT AI CHAT WIDGET                                        -->
+    <!-- ========================================================================= -->
+    <button id="btn-open-chat-fab" class="floating-chat-fab" aria-label="Open WeatherGPT AI Chat">
+      <span class="chat-fab-avatar">🤖</span>
+      <span class="chat-fab-label">Weather<strong class="brand-blue">GPT</strong> AI</span>
+    </button>
+
+    <div id="floating-chat-card" class="floating-chat-card hidden" role="dialog" aria-label="WeatherGPT AI Assistant">
+      <div class="chat-card-header">
+        <div class="chat-bot-identity">
+          <div class="chat-avatar-bubble">
+            <svg viewBox="0 0 24 24" fill="#0066FF" class="bot-svg-icon"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM7.5 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm9 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>
           </div>
-          <div class="chat-header-actions">
-            <button id="btn-minimize-chat" class="chat-tool-btn" aria-label="Minimize Chat" title="Minimize">
-              <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </button>
-            <button id="btn-close-chat" class="chat-tool-btn" aria-label="Close Chat" title="Close">
-              <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
+          <div class="chat-name-wrap">
+            <span class="chat-name-title">Weather<strong class="brand-blue">GPT</strong> AI</span>
+            <span class="chat-status-pill"><span class="status-dot-green"></span> Online</span>
           </div>
         </div>
-
-        <!-- Chat Conversation Scroll Stream -->
-        <div class="chat-messages-container" id="chat-messages-container">
-          <!-- User Sample Message -->
-          <div class="chat-bubble user-bubble">
-            <p class="bubble-text">What's the weather like in Chennai?</p>
-            <div class="bubble-meta">
-              <span class="bubble-time">11:24 AM</span>
-              <span class="read-ticks">✓✓</span>
-            </div>
-          </div>
-
-          <!-- AI Sample Response -->
-          <div class="chat-bubble ai-bubble">
-            <div class="ai-avatar-tiny">🤖</div>
-            <div class="ai-message-content">
-              <p class="bubble-text">Currently in Chennai, it is <strong>32°C</strong> and partly cloudy.<br><br>It feels like 36°C with 68% humidity. Winds are around 18 km/h from the southeast. There is a 10% chance of rain today. The UV index is high (7).<br><br>Have a great day! ☀️</p>
-              <div class="ai-action-bar">
-                <span class="bubble-time">11:24 AM</span>
-                <button class="btn-listen-speech" title="Listen aloud in vernacular speech" aria-label="Listen aloud">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                  <span>Listen</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Prompt Suggestion Chips -->
-        <div class="quick-prompt-chips">
-          <button class="prompt-chip" data-query="Give me the hourly forecast for today">
-            <span>📍 Hourly forecast</span>
+        <div class="chat-header-actions">
+          <button id="btn-minimize-chat" class="chat-tool-btn" aria-label="Minimize Chat" title="Minimize">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
-          <button class="prompt-chip" data-query="What is the 5-day weather forecast?">
-            <span>📊 Next 5 days</span>
-          </button>
-          <button class="prompt-chip" data-query="Are there any severe weather alerts right now?">
-            <span>⚠️ Alerts</span>
+          <button id="btn-close-chat" class="chat-tool-btn" aria-label="Close Chat" title="Close">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
-
-        <!-- Message Input Bar -->
-        <form id="chat-input-form" class="chat-input-form">
-          <button type="button" id="btn-voice-input" class="chat-voice-btn" aria-label="Speak query using microphone" title="Voice Input">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="23"></line>
-              <line x1="8" y1="23" x2="16" y2="23"></line>
-            </svg>
-          </button>
-          <input type="text" id="chat-text-input" class="chat-text-input" placeholder="Type a message..." autocomplete="off" aria-label="Type message for WeatherGPT">
-          <button type="submit" id="btn-chat-send" class="chat-send-btn" aria-label="Send message">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
-        </form>
       </div>
 
-      <!-- ========================================================================= -->
-      <!-- FIXED BOTTOM NAVIGATION BAR (Exact Match to Reference)                    -->
-      <!-- ========================================================================= -->
-      <nav class="bottom-nav-bar" aria-label="Main Navigation">
-        <button class="nav-tab-item active" data-tab="tab-home" aria-label="Home">
-          <div class="nav-pill-active-bg">
-            <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-            </svg>
-            <span class="nav-tab-label">HOME</span>
+      <div class="chat-messages-container" id="chat-messages-container">
+        <div class="chat-bubble user-bubble">
+          <p class="bubble-text">What's the weather like in Chennai?</p>
+          <div class="bubble-meta"><span class="bubble-time">11:24 AM</span><span class="read-ticks">✓✓</span></div>
+        </div>
+        <div class="chat-bubble ai-bubble">
+          <div class="ai-avatar-tiny">🤖</div>
+          <div class="ai-message-content">
+            <p class="bubble-text">Currently in Chennai, it is <strong>32°C</strong> and partly cloudy.<br><br>It feels like 36°C with 68% humidity. Winds are around 18 km/h from the southeast. There is a 10% chance of rain today. The UV index is high (7).<br><br>Have a great day! ☀️</p>
+            <div class="ai-action-bar">
+              <span class="bubble-time">11:24 AM</span>
+              <button class="btn-listen-speech" title="Listen aloud in vernacular speech" aria-label="Listen aloud">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <span>Listen</span>
+              </button>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <div class="quick-prompt-chips">
+        <button class="prompt-chip" data-query="Give me the hourly forecast for today"><span>📍 Hourly forecast</span></button>
+        <button class="prompt-chip" data-query="What is the 5-day weather forecast?"><span>📊 Next 5 days</span></button>
+        <button class="prompt-chip" data-query="Are there any severe weather alerts right now?"><span>⚠️ Alerts</span></button>
+      </div>
+
+      <form id="chat-input-form" class="chat-input-form">
+        <button type="button" id="btn-voice-input" class="chat-voice-btn" aria-label="Speak query using microphone" title="Voice Input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
         </button>
-
-        <button class="nav-tab-item" data-tab="tab-map" aria-label="Map">
-          <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-            <line x1="8" y1="2" x2="8" y2="18"></line>
-            <line x1="16" y1="6" x2="16" y2="22"></line>
-          </svg>
-          <span class="nav-tab-label">Map</span>
+        <input type="text" id="chat-text-input" class="chat-text-input" placeholder="Type a message..." autocomplete="off" aria-label="Type message for WeatherGPT">
+        <button type="submit" id="btn-chat-send" class="chat-send-btn" aria-label="Send message">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </button>
+      </form>
+    </div>
 
-        <button class="nav-tab-item" data-tab="tab-alerts" aria-label="Alerts">
-          <div class="nav-badge-icon-wrap">
-            <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span class="nav-alert-bubble" id="nav-alert-bubble">2</span>
-          </div>
-          <span class="nav-tab-label">Alerts</span>
-        </button>
+    <!-- ========================================================================= -->
+    <!-- FIXED BOTTOM NAVIGATION BAR (Mobile Only - Hidden on Desktop)             -->
+    <!-- ========================================================================= -->
+    <nav class="bottom-nav-bar mobile-only-bottom-nav" aria-label="Mobile Navigation">
+      <button class="nav-tab-item active" data-tab="tab-home" aria-label="Home">
+        <div class="nav-pill-active-bg">
+          <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span class="nav-tab-label">HOME</span>
+        </div>
+      </button>
 
-        <button class="nav-tab-item" data-tab="tab-profile" aria-label="Profile">
-          <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span class="nav-tab-label">Profile</span>
-        </button>
-      </nav>
+      <button class="nav-tab-item" data-tab="tab-map" aria-label="Map">
+        <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
+        <span class="nav-tab-label">Map</span>
+      </button>
 
-      <!-- Bottom Gesture Navigation Line Indicator -->
-      <div class="mobile-gesture-indicator" aria-hidden="true"></div>
+      <button class="nav-tab-item" data-tab="tab-alerts" aria-label="Alerts">
+        <div class="nav-badge-icon-wrap">
+          <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="nav-alert-bubble" id="nav-alert-bubble">2</span>
+        </div>
+        <span class="nav-tab-label">Alerts</span>
+      </button>
 
-    </main>
+      <button class="nav-tab-item" data-tab="tab-profile" aria-label="Profile">
+        <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span class="nav-tab-label">Profile</span>
+      </button>
+    </nav>
+
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 1: Dynamic Map Location Insights Sheet (When tapping on Map)       -->
+  <!-- MODALS & BOTTOM SHEETS                                                    -->
   <!-- ========================================================================= -->
+  
+  <!-- Modal 1: Dynamic Map Location Insights -->
   <div id="modal-place-insights" class="bottom-sheet-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="place-insights-title">
     <div class="bottom-sheet-card">
       <div class="sheet-drag-handle"></div>
@@ -598,37 +565,18 @@
 
       <div class="place-insights-body">
         <div class="place-metrics-grid">
-          <div class="place-metric-box">
-            <span class="lbl">Temperature</span>
-            <strong class="val" id="place-val-temp">31°C</strong>
-            <span class="sub" id="place-val-condition">Scattered Showers</span>
-          </div>
-          <div class="place-metric-box">
-            <span class="lbl">Rain Expected</span>
-            <strong class="val blue" id="place-val-rain">In 45 mins</strong>
-            <span class="sub" id="place-val-intensity">14.2 mm/h</span>
-          </div>
-          <div class="place-metric-box">
-            <span class="lbl">Travel / Farming Safety</span>
-            <strong class="val green" id="place-val-status">Safe With Caution</strong>
-            <span class="sub" id="place-val-status-sub">No waterlogging yet</span>
-          </div>
+          <div class="place-metric-box"><span class="lbl">Temperature</span><strong class="val" id="place-val-temp">31°C</strong><span class="sub" id="place-val-condition">Scattered Showers</span></div>
+          <div class="place-metric-box"><span class="lbl">Rain Expected</span><strong class="val blue" id="place-val-rain">In 45 mins</strong><span class="sub" id="place-val-intensity">14.2 mm/h</span></div>
+          <div class="place-metric-box"><span class="lbl">Travel / Farming Safety</span><strong class="val green" id="place-val-status">Safe With Caution</strong><span class="sub" id="place-val-status-sub">No waterlogging yet</span></div>
         </div>
 
-        <div class="place-action-guidance" id="place-guidance-text">
-          Light shower incoming along Route 16. Safe for small vehicles and harvesting operations. Avoid unpaved agricultural roads after 4 PM.
-        </div>
-
-        <button class="btn-ask-about-place" id="btn-ask-about-place">
-          💬 Ask WeatherGPT about this location
-        </button>
+        <div class="place-action-guidance" id="place-guidance-text">Light shower incoming along Route 16. Safe for small vehicles and harvesting operations. Avoid unpaved agricultural roads after 4 PM.</div>
+        <button class="btn-ask-about-place" id="btn-ask-about-place">💬 Ask WeatherGPT about this location</button>
       </div>
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 2: Alert Action Checklist Sheet (When tapping Active Alerts)       -->
-  <!-- ========================================================================= -->
+  <!-- Modal 2: Alert Action Checklist Sheet -->
   <div id="modal-alert-action" class="bottom-sheet-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="alert-action-title">
     <div class="bottom-sheet-card">
       <div class="sheet-drag-handle"></div>
@@ -657,9 +605,7 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 3: Location & City Picker Sheet                                     -->
-  <!-- ========================================================================= -->
+  <!-- Modal 3: Location Picker -->
   <div id="modal-location-picker" class="bottom-sheet-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="loc-sheet-title">
     <div class="bottom-sheet-card">
       <div class="sheet-drag-handle"></div>
@@ -670,29 +616,17 @@
 
       <div class="location-picker-body">
         <div class="quick-cities-list">
-          <button class="city-pick-btn active" data-city="Chennai" data-lat="13.0827" data-lon="80.2707" data-state="Tamil Nadu" data-persona="citizen">
-            📍 <strong>Chennai</strong>, Tamil Nadu (Current)
-          </button>
-          <button class="city-pick-btn" data-city="Wardha" data-lat="20.7453" data-lon="78.6022" data-state="Maharashtra" data-persona="farmer">
-            🌾 <strong>Wardha</strong>, Maharashtra (Cotton &amp; Mandi)
-          </button>
-          <button class="city-pick-btn" data-city="Rameswaram" data-lat="9.2876" data-lon="79.3129" data-state="Tamil Nadu" data-persona="marine">
-            ⛵ <strong>Rameswaram</strong>, Tamil Nadu (Palk Strait Coastal)
-          </button>
-          <button class="city-pick-btn" data-city="Mumbai" data-lat="19.0760" data-lon="72.8777" data-state="Maharashtra" data-persona="commuter">
-            🚗 <strong>Mumbai</strong>, Maharashtra (Urban Underpass Inundation)
-          </button>
-          <button class="city-pick-btn" data-city="Chamoli" data-lat="30.4074" data-lon="79.3262" data-state="Uttarakhand" data-persona="volunteer">
-            🛡️ <strong>Chamoli</strong>, Uttarakhand (Cloudburst &amp; Mesh)
-          </button>
+          <button class="city-pick-btn active" data-city="Chennai" data-lat="13.0827" data-lon="80.2707" data-state="Tamil Nadu" data-persona="citizen">📍 <strong>Chennai</strong>, Tamil Nadu (Current)</button>
+          <button class="city-pick-btn" data-city="Wardha" data-lat="20.7453" data-lon="78.6022" data-state="Maharashtra" data-persona="farmer">🌾 <strong>Wardha</strong>, Maharashtra (Cotton &amp; Mandi)</button>
+          <button class="city-pick-btn" data-city="Rameswaram" data-lat="9.2876" data-lon="79.3129" data-state="Tamil Nadu" data-persona="marine">⛵ <strong>Rameswaram</strong>, Tamil Nadu (Palk Strait Coastal)</button>
+          <button class="city-pick-btn" data-city="Mumbai" data-lat="19.0760" data-lon="72.8777" data-state="Maharashtra" data-persona="commuter">🚗 <strong>Mumbai</strong>, Maharashtra (Urban Underpass Inundation)</button>
+          <button class="city-pick-btn" data-city="Chamoli" data-lat="30.4074" data-lon="79.3262" data-state="Uttarakhand" data-persona="volunteer">🛡️ <strong>Chamoli</strong>, Uttarakhand (Cloudburst &amp; Mesh)</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 4: 2G USSD (*99*68#) Keypad Simulator                               -->
-  <!-- ========================================================================= -->
+  <!-- Modal 4: 2G USSD (*99*68#) Keypad Simulator -->
   <div id="modal-ussd-simulator" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ussd-sim-title">
     <div class="ussd-phone-body">
       <div class="ussd-screen-bezel">
@@ -708,25 +642,14 @@
           4. Emergency SOS<br>
           Reply with option:
         </div>
-        <div class="ussd-input-display">
-          <span id="ussd-buffer-display">&gt; _</span>
-        </div>
+        <div class="ussd-input-display"><span id="ussd-buffer-display">&gt; _</span></div>
       </div>
 
-      <!-- Keypad Buttons -->
       <div class="ussd-keypad-grid">
-        <button class="keypad-btn" data-key="1">1</button>
-        <button class="keypad-btn" data-key="2">2</button>
-        <button class="keypad-btn" data-key="3">3</button>
-        <button class="keypad-btn" data-key="4">4</button>
-        <button class="keypad-btn" data-key="5">5</button>
-        <button class="keypad-btn" data-key="6">6</button>
-        <button class="keypad-btn" data-key="7">7</button>
-        <button class="keypad-btn" data-key="8">8</button>
-        <button class="keypad-btn" data-key="9">9</button>
-        <button class="keypad-btn" data-key="*">*</button>
-        <button class="keypad-btn" data-key="0">0</button>
-        <button class="keypad-btn" data-key="#">#</button>
+        <button class="keypad-btn" data-key="1">1</button><button class="keypad-btn" data-key="2">2</button><button class="keypad-btn" data-key="3">3</button>
+        <button class="keypad-btn" data-key="4">4</button><button class="keypad-btn" data-key="5">5</button><button class="keypad-btn" data-key="6">6</button>
+        <button class="keypad-btn" data-key="7">7</button><button class="keypad-btn" data-key="8">8</button><button class="keypad-btn" data-key="9">9</button>
+        <button class="keypad-btn" data-key="*">*</button><button class="keypad-btn" data-key="0">0</button><button class="keypad-btn" data-key="#">#</button>
       </div>
 
       <div class="ussd-action-row">
