@@ -44,20 +44,31 @@ WeatherGPT uses a curated dark-mode glassmorphic theme with distinct hazard warn
 
 ---
 
-## 3. The 3-Zone Unified Mobile Screen Architecture
+## 3. The All-in-One 'Live AI Channel' Architecture
+
+Instead of fragmented tabs or complex meteorological dashboards, WeatherGPT operates as a **unified, all-in-one personalized meteorological broadcast channel**. The AI automatically senses the user's geospatial location and context (coastal maritime, rural farm belt, or urban transit corridor) to surface the exact upgraded government intelligence needed without cognitive friction.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  📍 Wardha, Maharashtra  •  12 Sep, 4:15 PM  •  🇮🇳 Bhashini│
+│  📍 Wardha, Maharashtra  •  12 Sep, 4:15 PM  •  🇮🇳 Hindi   │
 ├──────────────────────────────────────────────────────────┤
-│  ZONE 1: THE ACTIVE SAFETY SHIELD                        │
-│  (Replaces Damini Lightning & NDMA Sachet)               │
+│  🎙️ LIVE WEATHER ANCHOR (Auto-Narrated on App Launch)    │
 │  ┌────────────────────────────────────────────────────┐  │
-│  │ ⚡ AMBER WATCH: Thunderstorm 18 km West (Moving SE)  │  │
-│  │ Lightning risk: Moderate • Tap for safety shelter  │  │
+│  │ ▶ [❚❚] 0:14 / 0:30  |||||!||||!||||!|||||  1.0x    │  │
+│  │ "नमस्ते! आज दोपहर 2 बजे तक धूप रहेगी। 1 बजे तक      │  │
+│  │ कीटनाशक का काम निपटा लें। शाम को आंधी-बारिश है।"   │  │
 │  └────────────────────────────────────────────────────┘  │
 ├──────────────────────────────────────────────────────────┤
-│  ZONE 2: THE HYPERLOCAL ACTION CARD                      │
+│  ZONE 1: AMBIENT CONTEXTUAL HERO (Auto-Tuned)            │
+│  • If Coastal: Matsya Shoal Compass & Safe Voyage Window │
+│  • If Farmer: 4-in-1 Kisan Field Action Matrix           │
+│  • If Storm within 25km: Damini Lightning Siren Takeover │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │ ⚡ SURAKSHA SIREN: Lightning 14 km NW (Moving SE)    │  │
+│  │ Arriving in: 18 Mins • All-Clear in: 48 Mins       │  │
+│  └────────────────────────────────────────────────────┘  │
+├──────────────────────────────────────────────────────────┤
+│  ZONE 2: ZERO-JARGON ACTION HORIZON                      │
 │  (Replaces IMD Mausam & Meghdoot)                        │
 │  ┌────────────────────────────────────────────────────┐  │
 │  │ 🌤️ 31°C  •  Feels 35°C  •  Humidity 74%           │  │

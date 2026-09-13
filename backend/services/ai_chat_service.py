@@ -6,10 +6,12 @@ and 100% Offline Deterministic Indic Templates (Hindi, Marathi, English, Telugu,
 
 import os
 import re
-from typing import Dict, Any
+from typing import Dict, Any, List
 from .weather_service import weather_service
 from .rules_engine import rules_engine
 from .spatial_cache_service import spatial_cache
+from .vector_store_service import vector_store
+from .ml_risk_service import ml_risk_engine
 from ..models.schemas import ChatQuery, ChatResponse
 
 
@@ -40,6 +42,8 @@ class AIChatService:
                 verified_data_points=cached_result["verified_data_points"],
                 cache_hit=True,
                 spatial_cluster_id=cached_result.get("cluster_id", "cached"),
+                ml_risk=cached_result.get("ml_risk"),
+                retrieved_knowledge_sources=cached_result.get("retrieved_knowledge_sources", []),
             )
 
         # Step 3: Fetch Live Verified Atmospheric Physics
@@ -47,7 +51,15 @@ class AIChatService:
         curr = weather.current
         max_rain_prob = max([nh.rain_prob_pct for nh in weather.nowcast_3h]) if weather.nowcast_3h else 20.0
 
-        # Step 4: Run Deterministic Scientific Formulas
+        # Step 4: Run ML Risk Prediction & Vector RAG Retrieval
+        ml_risk = ml_risk_engine.evaluate_risk(curr, weather.nowcast_3h)
+        docs = vector_store.search(
+            query=text,
+            crop=entity if entity != "crop" else None,
+            top_k=2,
+        )
+        retrieved_sources = [f"[{d.statutory_authority}] {d.title}" for d in docs]
+
         verified_data = {
             "temp_c": curr.temperature_2m,
             "feels_like_c": curr.apparent_temperature,
@@ -56,6 +68,9 @@ class AIChatService:
             "wind_kmh": curr.wind_speed_10m,
             "wind_gusts_kmh": curr.wind_gusts_10m,
             "soil_moisture": curr.soil_moisture_0_to_1cm,
+            "ml_risk_level": ml_risk.risk_level,
+            "ml_risk_probability": ml_risk.risk_probability,
+            "primary_hazard_driver": ml_risk.primary_driver,
         }
 
         # Step 5: Generate Grounded Answer (Cloud LLM or Indic Template Engine)
@@ -76,6 +91,8 @@ class AIChatService:
             "action_badge": badge,
             "action_badge_label": badge_label,
             "verified_data_points": verified_data,
+            "ml_risk": ml_risk.model_dump(),
+            "retrieved_knowledge_sources": retrieved_sources,
         }
         cluster_id = spatial_cache.set(lat, lon, intent, entity, lang, payload)
 
@@ -89,6 +106,8 @@ class AIChatService:
             verified_data_points=verified_data,
             cache_hit=False,
             spatial_cluster_id=cluster_id,
+            ml_risk=ml_risk,
+            retrieved_knowledge_sources=retrieved_sources,
         )
 
     def _detect_intent_and_entity(self, text: str) -> tuple[str, str]:

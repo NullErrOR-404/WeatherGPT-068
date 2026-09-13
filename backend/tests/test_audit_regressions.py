@@ -156,3 +156,25 @@ def test_api_query_coordinate_boundary_validation():
         "language": "en"
     })
     assert res_chat.status_code == 422
+
+
+def test_insat3ds_planck_inversion():
+    """
+    Verifies INSAT-3DS TIR-1 (10.8 um) Planck blackbody inversion.
+    Deep convective cumulonimbus cores must yield cold brightness temperatures (T_b <= -40°C).
+    Zero/negative radiance must return absolute zero boundary (-273.15°C).
+    """
+    from backend.services.mausam_rakshak_service import MausamRakshakService
+
+    # 1. Typical convective storm core (Radiance ~ 15.0 mW/m^2/sr/cm^-1)
+    tb_convective = MausamRakshakService.planck_radiance_to_brightness_temp(15.0)
+    assert tb_convective < -50.0  # Deep convective freezing core
+
+    # 2. Warm ground / low cloud (Radiance ~ 100.0 mW/m^2/sr/cm^-1)
+    tb_warm = MausamRakshakService.planck_radiance_to_brightness_temp(100.0)
+    assert tb_warm > 0.0  # Above freezing, not a severe convective cloud-top
+
+    # 3. Defensive zero/negative radiance boundary check
+    tb_zero = MausamRakshakService.planck_radiance_to_brightness_temp(0.0)
+    assert tb_zero == -273.15
+

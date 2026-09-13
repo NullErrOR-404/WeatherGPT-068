@@ -94,3 +94,17 @@ def test_api_rakshak_report_and_pins():
     pins_res = client.get("/api/rakshak/verified?lat=20.7453&lon=78.6022")
     assert pins_res.status_code == 200
     assert isinstance(pins_res.json(), list)
+
+
+def test_api_sdk_widget_config():
+    """Verifies that third-party government apps can fetch the lightweight embed widget config."""
+    res = client.get("/api/sdk/widget-config?lat=20.7453&lon=78.6022&lang=hi&persona=kisan")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["widget_version"] == "1.1.0"
+    assert data["embed_provider"] == "WeatherGPT-MoES"
+    assert "temperature_c" in data
+    assert "action_badge" in data
+    assert "OGDL-India" in data["data_provenance"]
+    assert len(data["quick_chips"]) >= 3
+

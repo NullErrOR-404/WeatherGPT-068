@@ -32,6 +32,28 @@ class NowcastHour(BaseModel):
     icon: str
 
 
+class CitizenXAIBadge(BaseModel):
+    feature_name: str
+    display_label: str
+    impact_pct: float
+    direction: str  # "INCREASE_RISK" | "REDUCE_RISK"
+    icon: str
+
+
+class MLRiskAssessment(BaseModel):
+    risk_level: str  # SAFE, WATCH, SEVERE, DANGER
+    risk_probability: float  # 0.0 - 1.0
+    hazard_type: str
+    primary_driver: str
+    headline: str
+    action_recommendation: str
+    citizen_xai_badges: List[CitizenXAIBadge] = Field(default_factory=list)
+    evaluator_shap_values: Dict[str, float] = Field(default_factory=dict)
+    base_expected_value: float = 0.25
+    model_version: str = "WeatherGPT-TreeSHAP-v1.1"
+    efficiency_axiom_verified: bool = True
+
+
 class WeatherResponse(BaseModel):
     latitude: float
     longitude: float
@@ -40,6 +62,11 @@ class WeatherResponse(BaseModel):
     nowcast_3h: List[NowcastHour]
     today_action_summary: str
     action_badge_status: str  # "SAFE", "CAUTION", "UNSAFE"
+    data_provenance: str = Field(
+        default="India Meteorological Department (IMD) & Open-Meteo under Open Government Data License - India (OGDL-India)",
+        description="Statutory open government data license provenance",
+    )
+    ml_risk: Optional[MLRiskAssessment] = None
 
 
 class AgroAdvisory(BaseModel):
@@ -54,6 +81,10 @@ class AgroAdvisory(BaseModel):
     drift_hazard: str  # "SAFE", "HIGH"
     fungal_blight_risk: bool
     soil_saturation_pct: float
+    statutory_disclaimer: str = Field(
+        default="Advisory derived from ICAR empirical rules. Follow Central Insecticides Board (CIBRC) registered label instructions. WeatherGPT is not liable for commercial crop outcomes.",
+        description="Pesticide and agricultural liability limitation disclaimer",
+    )
 
 
 class DisasterAlert(BaseModel):
@@ -68,6 +99,10 @@ class DisasterAlert(BaseModel):
     distance_km: Optional[float] = None
     vector_movement: Optional[str] = None  # e.g. "Moving Southeast at 25 km/h"
     all_clear_countdown_mins: Optional[int] = None
+    source_authority: str = Field(
+        default="Official NDMA / IMD Common Alerting Protocol (CAP) feed (Sec 54 DM Act 2005 compliant)",
+        description="Official disaster alerting source authority",
+    )
 
 
 class ChatQuery(BaseModel):
@@ -88,6 +123,8 @@ class ChatResponse(BaseModel):
     verified_data_points: Dict[str, Any]
     cache_hit: bool
     spatial_cluster_id: str
+    ml_risk: Optional[MLRiskAssessment] = None
+    retrieved_knowledge_sources: List[str] = Field(default_factory=list)
 
 
 class CitizenHazardReport(BaseModel):
@@ -113,7 +150,12 @@ class AntiFakeValidationResult(BaseModel):
 
 
 class MissedCallRequest(BaseModel):
-    phone_number: str = Field(..., max_length=20)
+    phone_number: str = Field(
+        ...,
+        max_length=20,
+        pattern=r"^\+?[1-9]\d{9,14}$",
+        description="E.164 international phone number format",
+    )
     latitude: Optional[float] = Field(default=20.7453, ge=-90.0, le=90.0)
     longitude: Optional[float] = Field(default=78.6022, ge=-180.0, le=180.0)
     language: Optional[str] = Field(default="mr", max_length=10)
@@ -142,3 +184,103 @@ class MandiRainShieldReport(BaseModel):
     hours_to_squall: float
     expected_rain_mm: float
     tarpaulin_advisory: str
+
+
+class AapdaMitraBridgeRequest(BaseModel):
+    volunteer_id: str = Field(..., max_length=50)
+    village_panchayat: str = Field(..., max_length=100)
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    language: str = Field(default="mr", max_length=10)
+    hazard_type: str = Field(..., description="CYCLONE, CLOUDBURST, FLOOD, SQUALL")
+    severity: str = Field(default="CRITICAL_RED")
+    registered_button_phone_count: int = Field(default=45, ge=0)
+    auth_token: Optional[str] = Field(
+        default=None,
+        description="NDMA volunteer cryptographic authorization token (e.g. NDMA-VOL-...) to prevent unauthorized siren triggers",
+    )
+
+
+class CommunityAlertDispatch(BaseModel):
+    dispatch_id: str
+    village_panchayat: str
+    siren_frequency_hz: int
+    siren_pattern: str  # e.g. "INTERMITTENT_HI_LO_120S"
+    loudspeaker_announcement_script: str
+    button_phone_sms_broadcast: str
+    evacuation_muster_point: str
+    action_checklist: List[str]
+    vulnerable_household_priorities: List[str]
+    timestamp: str
+    authorized_by: str = "NDMA_AAPDA_MITRA_VERIFIED"
+
+
+class HeadcountTallyRequest(BaseModel):
+    volunteer_id: str
+    village_panchayat: str
+    shelter_name: str
+    evacuated_citizens: int
+    missing_unaccounted: int
+    urgent_medical_cases: int
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    auth_token: Optional[str] = Field(default=None)
+
+
+class HeadcountTallyReport(BaseModel):
+    tally_id: str
+    muster_point: str
+    safe_percentage: float
+    sos_beacon_required: bool
+    prithvi_mesh_sos_frame_hex: Optional[str]
+    logged_at: str
+
+
+class MarineVoyageRequest(BaseModel):
+    boat_name: str = Field(..., max_length=50)
+    current_latitude: float = Field(..., ge=-90.0, le=90.0)
+    current_longitude: float = Field(..., ge=-180.0, le=180.0)
+    harbor_name: str = Field(default="Nagapattinam Fishing Harbour", max_length=100)
+    harbor_latitude: float = Field(default=10.7672, ge=-90.0, le=90.0)
+    harbor_longitude: float = Field(default=79.8449, ge=-180.0, le=180.0)
+    cruising_speed_knots: float = Field(default=6.0, gt=1.0, le=30.0)
+    language: str = Field(default="ta", max_length=10)
+
+
+class MarineVoyageAdvisory(BaseModel):
+    advisory_id: str
+    boat_name: str
+    safety_badge: str  # "SAFE_VOYAGE", "TURNBACK_IMMEDIATE", "BORDER_BREACH_WARNING", "HARBOR_BOUND"
+    significant_wave_height_m: float
+    peak_wave_period_s: float
+    wind_speed_knots: float
+    distance_to_harbor_km: float
+    distance_to_imbl_nm: float
+    imbl_border_siren_active: bool
+    turnback_deadline_ist: str
+    time_remaining_to_turnback_mins: int
+    nearest_pfz_shoal: Dict[str, Any]
+    coastal_voice_bulletin: str
+    statutory_disclaimer: str
+
+
+class USSDSessionRequest(BaseModel):
+    session_id: str = Field(..., max_length=50)
+    phone_number: str = Field(
+        ...,
+        max_length=20,
+        pattern=r"^\+?[1-9]\d{9,14}$",
+        description="E.164 international phone number format",
+    )
+    user_input: str = Field(default="*99*68#", max_length=20)
+    latitude: Optional[float] = Field(default=20.7453, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(default=78.6022, ge=-180.0, le=180.0)
+    language: Optional[str] = Field(default="mr", max_length=10)
+
+
+class USSDSessionResponse(BaseModel):
+    session_id: str
+    action: str  # "CONTINUE" or "END"
+    ussd_menu_text: str
+    character_count: int
+    fits_standard_ussd_pdu: bool

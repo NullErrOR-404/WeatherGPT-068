@@ -14,12 +14,20 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - LOG_LEVEL=info
+      - ENVIRONMENT=${ENVIRONMENT:-development}
     restart: unless-stopped
+    user: "10001:10001"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
     volumes:
-      - ./backend:/app/backend
-      - ./frontend:/app/frontend
+      - ./backend:/app/backend:ro
+      - ./frontend:/app/frontend:ro

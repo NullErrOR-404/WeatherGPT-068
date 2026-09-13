@@ -10,12 +10,18 @@ from fastapi import WebSocket
 
 
 class WIS2Service:
+    MAX_CONNECTIONS = 1000  # Strict DoS connection ceiling
+
     def __init__(self):
         self.active_connections: Set[WebSocket] = set()
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket) -> bool:
+        if len(self.active_connections) >= self.MAX_CONNECTIONS:
+            await websocket.close(code=1013, reason="Maximum subscriber capacity reached")
+            return False
         await websocket.accept()
         self.active_connections.add(websocket)
+        return True
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.discard(websocket)

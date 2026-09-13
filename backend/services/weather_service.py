@@ -7,6 +7,7 @@ import time
 import httpx
 from typing import Dict, Any, List, Optional
 from ..models.schemas import WeatherResponse, CurrentWeatherMetrics, NowcastHour
+from .ml_risk_service import ml_risk_engine
 
 # WMO Weather Code Descriptions
 WMO_DESCRIPTIONS = {
@@ -135,6 +136,7 @@ class WeatherService:
             action_badge = "SAFE"
 
         location_name = "Wardha, Maharashtra" if abs(lat - 20.74) < 1.0 else f"Lat {lat:.2f}, Lon {lon:.2f}"
+        ml_risk = ml_risk_engine.evaluate_risk(current_metrics, nowcast_3h)
 
         return WeatherResponse(
             latitude=lat,
@@ -144,6 +146,7 @@ class WeatherService:
             nowcast_3h=nowcast_3h,
             today_action_summary=today_action,
             action_badge_status=action_badge,
+            ml_risk=ml_risk,
         )
 
     def _get_fallback_weather(self, lat: float, lon: float) -> WeatherResponse:
@@ -166,6 +169,8 @@ class WeatherService:
             NowcastHour(time="17:00", hour_label="5 PM", temp_c=26.8, rain_prob_pct=85, precip_mm=4.2, weather_code=63, icon="🌧️"),
             NowcastHour(time="18:00", hour_label="6 PM", temp_c=25.9, rain_prob_pct=40, precip_mm=0.8, weather_code=61, icon="🌦️"),
         ]
+        ml_risk = ml_risk_engine.evaluate_risk(current_metrics, nowcast_3h)
+
         return WeatherResponse(
             latitude=lat,
             longitude=lon,
@@ -174,6 +179,7 @@ class WeatherService:
             nowcast_3h=nowcast_3h,
             today_action_summary="Rain approaching at 5:00 PM. Spraying closed; safe window tomorrow morning.",
             action_badge_status="UNSAFE",
+            ml_risk=ml_risk,
         )
 
 

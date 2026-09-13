@@ -24,6 +24,8 @@ graph TD
     DOCS --> D_UI[UI_UX.md: Design Tokens & Screen Zones]
     DOCS --> D_DB[DATABASE_SCHEMA.md: Pydantic & Cache Models]
     DOCS --> D_IP[IMPLEMENTATION_PLAN.md: Build Phases & Checklist]
+    DOCS --> D_AUDIT[FEASIBILITY_SCALABILITY_LEGAL_AUDIT.md: DPDP Act 2023, DM Act 2005 & Scale]
+    DOCS --> D_PLAYBOOK[PRODUCT_FOUNDATION_PLAYBOOK.md: 10-Dimensional Teardown]
     DOCS --> D_REL[RELATIONSHIPS_GRAPH.md: Knowledge Graph]
 
     %% Backend Structure
