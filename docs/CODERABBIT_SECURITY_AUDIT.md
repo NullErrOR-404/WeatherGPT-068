@@ -41,6 +41,13 @@ All identified vulnerabilities have been remediated with defensive code patterns
 | **SEC-11** | 🔴 **CRITICAL** | **Insecure Cryptographic Defaults** | [`backend/main.py`](file:///c:/WeatherGPT-068/backend/main.py) & [`backend/services/prithvi_mesh_service.py`](file:///c:/WeatherGPT-068/backend/services/prithvi_mesh_service.py) | In production, default or weak keys could be accidentally deployed, undermining disaster message authenticity. | Implemented **Pre-Flight Fail-Closed Validation** (`run_security_preflight_check`) aborting startup if keys are insecure in production. | **RESOLVED** |
 | **SEC-12** | 🟡 **MEDIUM** | **Clickjacking & XSS / CSP** | [`backend/main.py`](file:///c:/WeatherGPT-068/backend/main.py) | Missing Content Security Policy permitted unrestricted framing and potential script execution. | Configured **Sovereign Government Allowlist CSP** (`frame-ancestors 'self' https://*.gov.in https://*.nic.in`) + Permissions-Policy. | **RESOLVED** |
 | **SEC-13** | 🟡 **MEDIUM** | **CI/CD Vulnerability Ingestion** | [`.github/workflows/security-audit.yml`](file:///c:/WeatherGPT-068/.github/workflows/security-audit.yml) | Code changes could introduce dependencies with known CVEs or SAST vulnerabilities undetected. | Built **Automated CI/CD Security Gate** enforcing Bandit SAST, pip-audit CVE scan, and rootless container verification. | **RESOLVED** |
+| **SEC-14** | 🟠 **HIGH** | **DoS / Query String Flooding** | [`backend/main.py`](file:///c:/WeatherGPT-068/backend/main.py) | Unbounded `frame_hex` query strings on `/api/mesh/unpack` and `/api/mesh/relay` allowed mega-payload memory allocation attacks. | Enforced strict `max_length=256` parameter bounding on all binary hex queries. | **RESOLVED** |
+| **SEC-15** | 🟠 **HIGH** | **DoS / State Table Exhaustion** | [`backend/main.py`](file:///c:/WeatherGPT-068/backend/main.py) | `_client_request_history` stored keys permanently under IP-rotation attacks without state eviction. | Added **Active State Table Pruning** capped at `MAX_TRACKED_CLIENT_IPS = 5000` purging inactive IPs. | **RESOLVED** |
+| **SEC-16** | 🟠 **HIGH** | **DoS / Unbounded Memory Cache** | [`backend/services/weather_service.py`](file:///c:/WeatherGPT-068/backend/services/weather_service.py) | `_memory_cache` lacked size ceiling, vulnerable to memory bloating under coordinate fuzzing attacks. | Enforced `OrderedDict` with `MAX_CACHE_SIZE = 2000` and automatic $O(1)$ LRU eviction. | **RESOLVED** |
+| **SEC-17** | 🟠 **HIGH** | **Auth Bypass / Siren Dispatch** | [`backend/services/aapda_mitra_service.py`](file:///c:/WeatherGPT-068/backend/services/aapda_mitra_service.py) | Submitting `volunteer_id` containing `"VOL"` bypassed token check to gain verified NDMA authority status. | Removed heuristic fallback; strictly enforce cryptographic tokens with constant-time comparison. | **RESOLVED** |
+| **SEC-18** | 🟡 **MEDIUM** | **Integer Overflow & String Flooding** | [`backend/models/schemas.py`](file:///c:/WeatherGPT-068/backend/models/schemas.py) | `HeadcountTallyRequest` and `CitizenHazardReport` allowed negative numbers, integer overflows, and unbounded strings. | Added defensive numeric bounds (`ge=0, le=100000`) and `max_length` validation to all fields. | **RESOLVED** |
+| **SEC-19** | 🟡 **MEDIUM** | **WebSocket Capacity Resource Leak** | [`backend/main.py`](file:///c:/WeatherGPT-068/backend/main.py) | Capacity-rejected WebSocket connections continued into heartbeat receive loops, causing uncaught exceptions. | Gated endpoint loop on `wis2_service.connect()` boolean return, exiting immediately on capacity rejection. | **RESOLVED** |
+| **SEC-20** | 🟢 **LOW** | **OWASP XSS Defense-in-Depth** | [`frontend/app.js`](file:///c:/WeatherGPT-068/frontend/app.js) | `escapeHtml()` function only escaped `&`, `<`, and `>`, omitting quotes and failing on non-string inputs. | Upgraded to full OWASP entity sanitizer escaping quotes (`"`, `'`) with safe string typecasting. | **RESOLVED** |
 
 ---
 
@@ -96,9 +103,9 @@ All identified vulnerabilities have been remediated with defensive code patterns
 
 ## 🧪 4. Automated Security Test Verification
 
-A dedicated security test suite [`backend/tests/test_security_hardened.py`](file:///c:/WeatherGPT-068/backend/tests/test_security_hardened.py) was written and executed:
+A dedicated security test suite [`backend/tests/test_security_hardened.py`](file:///c:/WeatherGPT-068/backend/tests/test_security_hardened.py) with 18 specialized test cases was written and executed:
 
-```
+```text
 backend/tests/test_security_hardened.py::test_pii_phone_number_masking_dpdp_act PASSED
 backend/tests/test_security_hardened.py::test_e164_phone_regex_rejection PASSED
 backend/tests/test_security_hardened.py::test_ussd_session_memory_bounding_dos_prevention PASSED
@@ -108,8 +115,17 @@ backend/tests/test_security_hardened.py::test_owasp_security_headers_enforced PA
 backend/tests/test_security_hardened.py::test_rate_limiter_throttling PASSED
 backend/tests/test_security_hardened.py::test_prithvi_mesh_authority_hmac PASSED
 backend/tests/test_security_hardened.py::test_aapda_mitra_volunteer_authorization_status PASSED
+backend/tests/test_security_hardened.py::test_sovereign_csp_and_permissions_policy_headers PASSED
+backend/tests/test_security_hardened.py::test_production_fail_closed_preflight_rejection PASSED
+backend/tests/test_security_hardened.py::test_production_preflight_success_with_strong_secrets PASSED
+backend/tests/test_security_hardened.py::test_development_permissive_preflight PASSED
+backend/tests/test_security_hardened.py::test_weather_service_lru_cache_bounding_dos_prevention PASSED
+backend/tests/test_security_hardened.py::test_rate_limiter_stale_ip_pruning_memory_leak_prevention PASSED
+backend/tests/test_security_hardened.py::test_volunteer_id_alone_does_not_grant_siren_authorization PASSED
+backend/tests/test_security_hardened.py::test_frame_hex_unbounded_query_param_rejected PASSED
+backend/tests/test_security_hardened.py::test_headcount_tally_integer_overflow_rejection PASSED
 
-============================= 72 passed in 20.38s =============================
+============================= 89 passed in 15.81s =============================
 ```
 
 ## 🏆 5. Compliance Verdict

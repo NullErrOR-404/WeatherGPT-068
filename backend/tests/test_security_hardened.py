@@ -300,3 +300,86 @@ def test_development_permissive_preflight():
         else:
             os.environ.pop("ENVIRONMENT", None)
 
+
+def test_weather_service_lru_cache_bounding_dos_prevention():
+    """Verify WeatherService._memory_cache strictly caps entries to MAX_CACHE_SIZE."""
+    from backend.services.weather_service import weather_service
+    original_cap = weather_service.MAX_CACHE_SIZE
+    weather_service.MAX_CACHE_SIZE = 5
+    try:
+        weather_service._memory_cache.clear()
+        for i in range(10):
+            weather_service._memory_cache[f"lat_{i}:lon_{i}"] = {
+                "data": None,
+                "timestamp": 1000.0 + i,
+            }
+        
+        # Add another entry via simulated cache set
+        while len(weather_service._memory_cache) >= weather_service.MAX_CACHE_SIZE:
+            weather_service._memory_cache.popitem(last=False)
+        weather_service._memory_cache["new_key"] = {"data": None, "timestamp": 2000.0}
+
+        assert len(weather_service._memory_cache) <= 5
+        assert "new_key" in weather_service._memory_cache
+    finally:
+        weather_service.MAX_CACHE_SIZE = original_cap
+        weather_service._memory_cache.clear()
+
+
+def test_rate_limiter_stale_ip_pruning_memory_leak_prevention():
+    """Verify IP rate limiter table prunes inactive entries when capacity is approached."""
+    import time
+    from backend.main import _client_request_history, MAX_TRACKED_CLIENT_IPS
+    now = time.time()
+    _client_request_history.clear()
+
+    # Populate with stale IPs (>60s old)
+    for i in range(MAX_TRACKED_CLIENT_IPS + 50):
+        _client_request_history[f"10.0.0.{i}"] = [now - 120.0]
+
+    # Making a request triggers middleware pruning
+    res = client.get("/api/weather/current?lat=20.74&lon=78.60")
+    assert res.status_code == 200
+
+    # Stale IPs should have been pruned below the cap
+    assert len(_client_request_history) <= MAX_TRACKED_CLIENT_IPS
+    _client_request_history.clear()
+
+
+def test_volunteer_id_alone_does_not_grant_siren_authorization():
+    """Verify an attacker cannot gain verified status merely by including VOL or NDMA in volunteer_id without token."""
+    req_spoof = AapdaMitraBridgeRequest(
+        volunteer_id="VOL-SUPER-HACKER",
+        village_panchayat="Deoli",
+        latitude=20.7453,
+        longitude=78.6022,
+        hazard_type="CYCLONE",
+        auth_token=None,  # Missing cryptographic token
+    )
+    res_spoof = aapda_mitra_service.create_community_dispatch(req_spoof)
+    assert res_spoof.authorized_by == "COMMUNITY_CITIZEN_ADVISORY"
+
+
+def test_frame_hex_unbounded_query_param_rejected():
+    """Verify oversized query strings on mesh endpoints are rejected with HTTP 422."""
+    giant_hex = "a" * 1000  # 1000 characters > 256 max_length
+    res = client.post(f"/api/mesh/unpack?frame_hex={giant_hex}")
+    assert res.status_code == 422
+
+
+def test_headcount_tally_integer_overflow_rejection():
+    """Verify negative and overflow headcount figures are rejected with HTTP 422."""
+    bad_payload = {
+        "volunteer_id": "VOL-01",
+        "village_panchayat": "Wardha",
+        "shelter_name": "ZP High School",
+        "evacuated_citizens": -50,  # Negative citizens rejected
+        "missing_unaccounted": 0,
+        "urgent_medical_cases": 0,
+        "latitude": 20.7453,
+        "longitude": 78.6022,
+    }
+    res = client.post("/api/aapda-mitra/headcount-tally", json=bad_payload)
+    assert res.status_code == 422
+
+

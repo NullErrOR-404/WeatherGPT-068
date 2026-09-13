@@ -20,6 +20,7 @@ Core Capabilities:
 import os
 import time
 import uuid
+import secrets
 from typing import Dict, Any, List, Optional, Tuple
 from ..models.schemas import (
     AapdaMitraBridgeRequest,
@@ -59,10 +60,20 @@ class AapdaMitraService:
         now_ist = time.strftime("%H:%M IST")
 
         # Authorization Gate: Verify NDMA Volunteer credentials
-        is_authorized = bool(
-            (req.auth_token and req.auth_token.startswith("NDMA-"))
-            or (req.volunteer_id and ("VOL" in req.volunteer_id.upper() or "NDMA" in req.volunteer_id.upper()))
-        )
+        # volunteer_id alone must NEVER grant verified status without a valid cryptographic token
+        env = os.getenv("ENVIRONMENT", "development").lower()
+        is_prod = env in ["production", "prod"]
+        master_token = os.getenv("AAPDA_MITRA_MASTER_TOKEN", "")
+
+        is_authorized = False
+        if req.auth_token:
+            clean_token = req.auth_token.strip()
+            if is_prod and master_token:
+                is_authorized = secrets.compare_digest(clean_token, master_token)
+            else:
+                # In development/staging, accept standard NDMA format tokens with adequate entropy
+                is_authorized = bool(clean_token.startswith("NDMA-") and len(clean_token) >= 16)
+
         auth_status = "NDMA_AAPDA_MITRA_VERIFIED" if is_authorized else "COMMUNITY_CITIZEN_ADVISORY"
 
         # Localized Loudspeaker Announcement Scripts

@@ -128,12 +128,12 @@ class ChatResponse(BaseModel):
 
 
 class CitizenHazardReport(BaseModel):
-    hazard_type: str = Field(..., description="HAIL, WATERLOGGING, LIGHTNING, SQUALL, FOG")
-    severity: str = Field(..., description="e.g. PEA_SIZE, GOLF_BALL, KNEE_DEEP, TREE_DOWN")
+    hazard_type: str = Field(..., max_length=30, description="HAIL, WATERLOGGING, LIGHTNING, SQUALL, FOG")
+    severity: str = Field(..., max_length=30, description="e.g. PEA_SIZE, GOLF_BALL, KNEE_DEEP, TREE_DOWN")
     latitude: float = Field(..., ge=-90.0, le=90.0)
     longitude: float = Field(..., ge=-180.0, le=180.0)
     user_id: str = Field(..., max_length=100)
-    timestamp: str
+    timestamp: str = Field(..., max_length=40)
     notes: Optional[str] = Field(default=None, max_length=500)
 
 
@@ -216,15 +216,15 @@ class CommunityAlertDispatch(BaseModel):
 
 
 class HeadcountTallyRequest(BaseModel):
-    volunteer_id: str
-    village_panchayat: str
-    shelter_name: str
-    evacuated_citizens: int
-    missing_unaccounted: int
-    urgent_medical_cases: int
+    volunteer_id: str = Field(..., max_length=50)
+    village_panchayat: str = Field(..., max_length=100)
+    shelter_name: str = Field(..., max_length=100)
+    evacuated_citizens: int = Field(..., ge=0, le=100000)
+    missing_unaccounted: int = Field(..., ge=0, le=100000)
+    urgent_medical_cases: int = Field(..., ge=0, le=100000)
     latitude: float = Field(..., ge=-90.0, le=90.0)
     longitude: float = Field(..., ge=-180.0, le=180.0)
-    auth_token: Optional[str] = Field(default=None)
+    auth_token: Optional[str] = Field(default=None, max_length=128)
 
 
 class HeadcountTallyReport(BaseModel):

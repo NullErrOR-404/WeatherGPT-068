@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/SIH_2026-Problem_Statement_PS26068-FF9933?style=for-the-badge&logo=target" alt="SIH 2026">
   <img src="https://img.shields.io/badge/Ministry-Earth_Sciences_(MoES)_%2F_IMD-0A2540?style=for-the-badge" alt="Ministry of Earth Sciences">
-  <img src="https://img.shields.io/badge/Tests-84%2F84_Passing_(100%25)-10B981?style=for-the-badge&logo=pytest" alt="84 Tests Passing">
+  <img src="https://img.shields.io/badge/Tests-89%2F89_Passing_(100%25)-10B981?style=for-the-badge&logo=pytest" alt="89 Tests Passing">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python" alt="Python 3.11">
   <img src="https://img.shields.io/badge/FastAPI-Production_ASGI-009688?style=for-the-badge&logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/Docker-Rootless_UID_10001-2496ED?style=for-the-badge&logo=docker" alt="Docker Rootless">
@@ -177,13 +177,13 @@ Access the universal web application in your browser at `http://localhost:8000`.
 docker-compose up --build
 ```
 
-### 3. Automated Test Suite (84/84 Tests Passing)
+### 3. Automated Test Suite (89/89 Tests Passing)
 WeatherGPT includes a comprehensive test suite covering end-to-end meteorological pipelines, XAI attribution, RAG compliance, USSD encoding, and security hardening:
 ```bash
 python -m pytest backend/tests/ -v
 ```
 ```text
-============================== 84 passed in 2.84s ==============================
+============================== 89 passed in 15.81s ==============================
 ```
 
 ---

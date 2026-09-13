@@ -5,6 +5,7 @@ Fetches high-resolution GFS/ECMWF numerical weather prediction data via Open-Met
 
 import time
 import httpx
+from collections import OrderedDict
 from typing import Dict, Any, List, Optional
 from ..models.schemas import WeatherResponse, CurrentWeatherMetrics, NowcastHour
 from .ml_risk_service import ml_risk_engine
@@ -36,8 +37,10 @@ WMO_DESCRIPTIONS = {
 
 
 class WeatherService:
+    MAX_CACHE_SIZE = 2000
+
     def __init__(self):
-        self._memory_cache: Dict[str, Dict[str, Any]] = {}
+        self._memory_cache: OrderedDict[str, Dict[str, Any]] = OrderedDict()
         self.cache_ttl = 600  # 10 minutes
 
     async def get_forecast(self, lat: float = 20.7453, lon: float = 78.6022) -> WeatherResponse:
@@ -47,7 +50,11 @@ class WeatherService:
         if cache_key in self._memory_cache:
             entry = self._memory_cache[cache_key]
             if now - entry["timestamp"] < self.cache_ttl:
+                # Move to end for LRU order
+                self._memory_cache.move_to_end(cache_key)
                 return entry["data"]
+            else:
+                del self._memory_cache[cache_key]
 
         # Call live Open-Meteo GFS/WRF model endpoint
         url = (
@@ -65,6 +72,8 @@ class WeatherService:
                 if resp.status_code == 200:
                     raw = resp.json()
                     parsed = self._parse_open_meteo_response(lat, lon, raw)
+                    while len(self._memory_cache) >= self.MAX_CACHE_SIZE:
+                        self._memory_cache.popitem(last=False)
                     self._memory_cache[cache_key] = {"data": parsed, "timestamp": now}
                     return parsed
         except Exception as e:

@@ -52,7 +52,7 @@ class PhoneSensorTelemetry(BaseModel):
     station_pressure_hpa: float = Field(..., description="Raw MEMS barometer reading")
     altitude_m: float = Field(0.0, description="Station elevation above MSL in meters")
     ambient_temp_c: float = Field(25.0, description="Ambient air temperature in Celsius")
-    pressure_samples_window: List[float] = Field(default_factory=list, description="Barometer samples over last 5-10 min")
+    pressure_samples_window: List[float] = Field(default_factory=list, max_length=120, description="Barometer samples over last 5-10 min (capped at 120)")
     accel_z_rms_g: float = Field(1.0, description="Vertical axis acceleration RMS (1.0g = stationary)")
     gps_vertical_speed_mps: float = Field(0.0, description="GPS vertical ascent/descent rate")
     ambient_lux: float = Field(10000.0, description="Ambient light sensor lux reading")

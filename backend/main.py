@@ -117,6 +117,7 @@ app.add_middleware(
 _client_request_history = defaultdict(list)
 RATE_LIMIT_COMPUTE_RPM = 100  # Generous threshold for tests, protective against denial of service
 RATE_LIMIT_DEFAULT_RPM = 300
+MAX_TRACKED_CLIENT_IPS = 5000  # Strict memory cap preventing slow-DoS memory exhaustion
 
 
 @app.middleware("http")
@@ -136,6 +137,13 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
 
         history = _client_request_history[client_ip]
         _client_request_history[client_ip] = [t for t in history if (now - t) <= 60]
+
+        # Active state table pruning when capacity ceiling is approached
+        if len(_client_request_history) > MAX_TRACKED_CLIENT_IPS:
+            stale_ips = [ip for ip, timestamps in _client_request_history.items() if not timestamps or (now - timestamps[-1]) > 60]
+            for stale_ip in stale_ips:
+                del _client_request_history[stale_ip]
+
         if len(_client_request_history[client_ip]) >= limit:
             return JSONResponse(
                 status_code=429,
@@ -348,8 +356,11 @@ async def get_cache_statistics():
 
 @app.websocket("/ws/alerts")
 async def websocket_alerts_endpoint(websocket: WebSocket):
-    """WMO WIS 2.0 real-time alert streaming connection."""
-    await wis2_service.connect(websocket)
+    """WMO WIS 2.0 real-time alert streaming connection with capacity gating."""
+    connected = await wis2_service.connect(websocket)
+    if not connected:
+        return
+
     try:
         while True:
             # Keep-alive heartbeat listener
@@ -412,11 +423,11 @@ async def analyze_insat3ds_cloud(spectral: Insat3dsSpectralRadiance):
 
 @app.get("/api/physics/k-index")
 async def get_k_index(
-    t850: float = Query(24.0, description="Temperature at 850 hPa in Celsius"),
-    t700: float = Query(10.0, description="Temperature at 700 hPa in Celsius"),
-    t500: float = Query(-12.0, description="Temperature at 500 hPa in Celsius"),
-    td850: float = Query(18.0, description="Dewpoint at 850 hPa in Celsius"),
-    td700: float = Query(6.0, description="Dewpoint at 700 hPa in Celsius"),
+    t850: float = Query(24.0, ge=-100.0, le=100.0, description="Temperature at 850 hPa in Celsius"),
+    t700: float = Query(10.0, ge=-100.0, le=100.0, description="Temperature at 700 hPa in Celsius"),
+    t500: float = Query(-12.0, ge=-100.0, le=100.0, description="Temperature at 500 hPa in Celsius"),
+    td850: float = Query(18.0, ge=-100.0, le=100.0, description="Dewpoint at 850 hPa in Celsius"),
+    td700: float = Query(6.0, ge=-100.0, le=100.0, description="Dewpoint at 700 hPa in Celsius"),
 ):
     """Calculates thermodynamic K-Index thunderstorm potential from atmospheric soundings."""
     return sensor_fusion_engine.calculate_k_index(t850, t700, t500, td850, td700)
@@ -446,7 +457,7 @@ async def pack_mesh_packet(packet: PrithviMeshPacket):
 
 
 @app.post("/api/mesh/unpack")
-async def unpack_mesh_packet(frame_hex: str = Query(..., description="64-byte hex string")):
+async def unpack_mesh_packet(frame_hex: str = Query(..., max_length=256, description="64-byte hex string")):
     """Unpacks and cryptographically verifies CRC-16 of a 64-byte PRITHVI-Mesh binary frame."""
     try:
         raw_bytes = bytes.fromhex(frame_hex.strip())
@@ -465,7 +476,7 @@ async def unpack_mesh_packet(frame_hex: str = Query(..., description="64-byte he
 
 @app.post("/api/mesh/relay", response_model=MeshRelayReport)
 async def relay_mesh_packet(
-    frame_hex: str = Query(..., description="64-byte binary frame in hex"),
+    frame_hex: str = Query(..., max_length=256, description="64-byte binary frame in hex"),
     receiver_lat: float = Query(20.7453, ge=-90.0, le=90.0),
     receiver_lon: float = Query(78.6022, ge=-180.0, le=180.0),
 ):
