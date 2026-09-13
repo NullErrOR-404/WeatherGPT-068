@@ -416,6 +416,104 @@ button {
     color: var(--color-text-secondary);
   }
 
+  /* Satellite Spectral & Opacity Subtoolbar */
+  .map-satellite-subtoolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: #F8FAFC;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    transition: all 0.25s ease;
+  }
+
+  .sat-channel-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .sat-channel-pill {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 11px;
+    border-radius: var(--radius-full);
+    border: 1px solid #CBD5E1;
+    background: #FFFFFF;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+  }
+
+  .sat-channel-pill:hover {
+    border-color: var(--color-brand-blue);
+    color: var(--color-brand-blue);
+  }
+
+  .sat-channel-pill.active {
+    background-color: var(--color-brand-blue);
+    color: #FFFFFF;
+    border-color: var(--color-brand-blue);
+    box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+  }
+
+  .sat-region-presets {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sat-preset-btn {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
+    background: #FFFFFF;
+    color: var(--color-text-main);
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .sat-preset-btn:hover {
+    background-color: #EFF6FF;
+    border-color: #BFDBFE;
+    color: var(--color-brand-blue);
+  }
+
+  .sat-opacity-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .sat-range-input {
+    accent-color: var(--color-brand-blue);
+    cursor: pointer;
+    width: 80px;
+  }
+
+  .fullscreen-sat-subtoolbar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 600;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-float);
+    margin-bottom: 0;
+  }
+
   .desktop-map-viewport {
     position: relative;
     width: 100%;

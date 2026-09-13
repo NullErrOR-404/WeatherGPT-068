@@ -289,10 +289,27 @@
                 </div>
                 <div class="desktop-layer-controls">
                   <select id="desktop-map-layer-select" class="layer-select" aria-label="Select Radar Layer">
-                    <option value="radar" selected>🌧️ Rainfall Radar ▾</option>
-                    <option value="satellite">🛰️ INSAT-3DS Satellite Clouds ▾</option>
+                    <option value="radar">🌧️ Rainfall Radar ▾</option>
+                    <option value="satellite" selected>🛰️ INSAT-3DS Satellite Clouds (Live Overlay) ▾</option>
                     <option value="wind">💨 Wind Flow ▾</option>
                   </select>
+                </div>
+              </div>
+
+              <!-- Satellite Spectral & Opacity Sub-Toolbar (Active when Satellite selected) -->
+              <div class="map-satellite-subtoolbar" id="desktop-sat-controls">
+                <div class="sat-channel-pills" role="radiogroup" aria-label="INSAT-3DS Spectral Channel">
+                  <button class="sat-channel-pill active" data-channel="ir1" title="Thermal Infrared 10.8µm (Convective clouds)">IR1 (Clouds)</button>
+                  <button class="sat-channel-pill" data-channel="vis" title="Daylight Visible 0.65µm (Optical cloud density)">VIS (Daylight)</button>
+                  <button class="sat-channel-pill" data-channel="wv" title="Water Vapour 6.8µm (Atmospheric moisture)">WV (Moisture)</button>
+                </div>
+                <div class="sat-region-presets">
+                  <button class="sat-preset-btn" id="btn-view-south-india" title="Focus view on South India">📍 South India</button>
+                  <button class="sat-preset-btn" id="btn-view-all-india" title="Zoom out to entire Indian Subcontinent">🇮🇳 All India</button>
+                </div>
+                <div class="sat-opacity-control">
+                  <span class="sat-opacity-label">Opacity: <strong id="sat-opacity-val">65%</strong></span>
+                  <input type="range" id="sat-opacity-slider" min="15" max="95" value="65" class="sat-range-input" aria-label="Satellite Cloud Layer Opacity" />
                 </div>
               </div>
 
@@ -306,7 +323,7 @@
                     <span id="desktop-play-icon">▶</span>
                   </button>
                   <div class="playback-timeline-wrap">
-                    <span class="playback-time-label" id="desktop-timestamp-label">Doppler Radar • Live Feed</span>
+                    <span class="playback-time-label" id="desktop-timestamp-label">INSAT-3DS Thermal IR • Live Over India</span>
                     <div class="playback-bar"><div class="playback-progress" id="desktop-playback-progress"></div></div>
                   </div>
                   <button id="btn-desktop-recenter" class="recenter-btn" title="Recenter map to your location">
@@ -315,7 +332,7 @@
                 </div>
 
                 <div class="desktop-map-hint">
-                  <span>💡 Tip: Click anywhere on the map to trigger instant dynamic weather insights for that district</span>
+                  <span>🛰️ INSAT-3DS Live Feed: Drag to pan across South India or anywhere in India • Scroll to zoom</span>
                 </div>
               </div>
             </div>
@@ -341,13 +358,30 @@
           </div>
         </header>
         <div class="fullscreen-map-wrapper">
+          <!-- Satellite Spectral & Opacity Sub-Toolbar for Fullscreen Map -->
+          <div class="map-satellite-subtoolbar fullscreen-sat-subtoolbar" id="fullscreen-sat-controls">
+            <div class="sat-channel-pills" role="radiogroup" aria-label="INSAT-3DS Spectral Channel">
+              <button class="sat-channel-pill active" data-channel="ir1" title="Thermal Infrared 10.8µm">IR1 (Clouds)</button>
+              <button class="sat-channel-pill" data-channel="vis" title="Daylight Visible 0.65µm">VIS (Daylight)</button>
+              <button class="sat-channel-pill" data-channel="wv" title="Water Vapour 6.8µm">WV (Moisture)</button>
+            </div>
+            <div class="sat-region-presets">
+              <button class="sat-preset-btn" id="btn-full-south-india" title="Focus view on South India">📍 South India</button>
+              <button class="sat-preset-btn" id="btn-full-all-india" title="Zoom out to all of India">🇮🇳 All India</button>
+            </div>
+            <div class="sat-opacity-control">
+              <span class="sat-opacity-label">Opacity: <strong id="full-sat-opacity-val">65%</strong></span>
+              <input type="range" id="fullscreen-sat-opacity-slider" min="15" max="95" value="65" class="sat-range-input" aria-label="Satellite Cloud Layer Opacity" />
+            </div>
+          </div>
+
           <div id="fullscreen-map-canvas" class="fullscreen-map-canvas"></div>
           <div class="radar-playback-toolbar">
             <button id="btn-radar-play" class="playback-btn" aria-label="Play radar animation">
               <span id="radar-play-icon">▶</span>
             </button>
             <div class="playback-timeline-wrap">
-              <span class="playback-time-label" id="radar-timestamp-label">Live Doppler Feed</span>
+              <span class="playback-time-label" id="radar-timestamp-label">INSAT-3DS Live Satellite Overlay</span>
               <div class="playback-bar"><div class="playback-progress" id="radar-playback-progress"></div></div>
             </div>
             <button id="btn-recenter-map" class="recenter-btn" title="Recenter to your location">

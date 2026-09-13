@@ -36,6 +36,12 @@
   let miniRadarLayer = null;
   let fullRadarLayer = null;
   let desktopRadarLayer = null;
+  let desktopSatelliteLayer = null;
+  let fullSatelliteLayer = null;
+  let homeSatelliteLayer = null;
+  let currentSatChannel = 'ir1';
+  let currentSatOpacity = 0.65;
+  const INSAT_BOUNDS = [[-10.0, 40.0], [45.5, 110.0]];
   let miniLocationMarker = null;
   let fullLocationMarker = null;
   let desktopLocationMarker = null;
@@ -291,10 +297,9 @@
     if (btnRadarPlay) {
       btnRadarPlay.addEventListener('click', toggleRadarPlayback);
     }
-    const btnDesktopRadarPlay = document.getElementById('btn-desktop-radar-play');
-    if (btnDesktopRadarPlay) {
-      btnDesktopRadarPlay.addEventListener('click', toggleRadarPlayback);
-    }
+    // Initialize active layer (INSAT-3DS live satellite overlay on map)
+    const initialLayer = (desktopLayerSelect && desktopLayerSelect.value) || 'satellite';
+    updateMapOverlayLayer(initialLayer);
   }
 
   async function fetchRainViewerRadarTimestamps() {
@@ -306,7 +311,10 @@
         if (frames.length > 0) {
           state.radarTimestamps = frames.map((f) => f.path);
           state.currentRadarIndex = (data.past_frames && data.past_frames.length > 0) ? data.past_frames.length - 1 : 0;
-          applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
+          const deskSel = document.getElementById('desktop-map-layer-select');
+          if (deskSel && deskSel.value === 'radar') {
+            applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
+          }
           return;
         }
       }
@@ -418,24 +426,158 @@
   }
 
   function updateMapOverlayLayer(layerType) {
+    const desktopSatControls = document.getElementById('desktop-sat-controls');
+    const fullSatControls = document.getElementById('fullscreen-sat-controls');
+
     if (layerType === 'satellite') {
-      openSatelliteModal('ir1');
+      applySatelliteOverlay(currentSatChannel, currentSatOpacity);
+      if (desktopSatControls) desktopSatControls.style.display = 'flex';
+      if (fullSatControls) fullSatControls.style.display = 'flex';
     } else {
-      if (state.radarTimestamps.length > 0) {
-        applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
+      removeSatelliteOverlay();
+      if (desktopSatControls) desktopSatControls.style.display = 'none';
+      if (fullSatControls) fullSatControls.style.display = 'none';
+
+      if (layerType === 'radar') {
+        if (state.radarTimestamps && state.radarTimestamps.length > 0) {
+          applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
+        }
       }
     }
   }
 
+  function applySatelliteOverlay(channel = currentSatChannel, opacity = currentSatOpacity) {
+    currentSatChannel = channel;
+    currentSatOpacity = opacity;
+    const satUrl = `/api/satellite/live?channel=${channel}&_t=${Math.floor(Date.now() / 300000)}`;
+
+    if (desktopMap) {
+      if (desktopSatelliteLayer) desktopMap.removeLayer(desktopSatelliteLayer);
+      desktopSatelliteLayer = L.imageOverlay(satUrl, INSAT_BOUNDS, {
+        opacity: opacity,
+        zIndex: 60,
+        interactive: false,
+      }).addTo(desktopMap);
+    }
+
+    if (fullMap) {
+      if (fullSatelliteLayer) fullMap.removeLayer(fullSatelliteLayer);
+      fullSatelliteLayer = L.imageOverlay(satUrl, INSAT_BOUNDS, {
+        opacity: opacity,
+        zIndex: 60,
+        interactive: false,
+      }).addTo(fullMap);
+    }
+
+    if (homeMiniMap) {
+      if (homeSatelliteLayer) homeMiniMap.removeLayer(homeSatelliteLayer);
+      homeSatelliteLayer = L.imageOverlay(satUrl, INSAT_BOUNDS, {
+        opacity: opacity,
+        zIndex: 60,
+        interactive: false,
+      }).addTo(homeMiniMap);
+    }
+
+    const channelNames = {
+      ir1: 'Thermal IR (Clouds)',
+      vis: 'Daylight Visible',
+      wv: 'Water Vapour',
+    };
+    const timeText = `INSAT-3DS ${channelNames[channel] || 'Thermal IR'} • Live Over India`;
+    const tsLabel = document.getElementById('radar-timestamp-label');
+    if (tsLabel) tsLabel.textContent = timeText;
+    const desktopTsLabel = document.getElementById('desktop-timestamp-label');
+    if (desktopTsLabel) desktopTsLabel.textContent = timeText;
+  }
+
+  function removeSatelliteOverlay() {
+    if (desktopMap && desktopSatelliteLayer) {
+      desktopMap.removeLayer(desktopSatelliteLayer);
+      desktopSatelliteLayer = null;
+    }
+    if (fullMap && fullSatelliteLayer) {
+      fullMap.removeLayer(fullSatelliteLayer);
+      fullSatelliteLayer = null;
+    }
+    if (homeMiniMap && homeSatelliteLayer) {
+      homeMiniMap.removeLayer(homeSatelliteLayer);
+      homeSatelliteLayer = null;
+    }
+  }
+
+  function setSatelliteOpacity(val) {
+    currentSatOpacity = val / 100;
+    if (desktopSatelliteLayer) desktopSatelliteLayer.setOpacity(currentSatOpacity);
+    if (fullSatelliteLayer) fullSatelliteLayer.setOpacity(currentSatOpacity);
+    if (homeSatelliteLayer) homeSatelliteLayer.setOpacity(currentSatOpacity);
+
+    const deskVal = document.getElementById('sat-opacity-val');
+    if (deskVal) deskVal.textContent = `${val}%`;
+    const fullVal = document.getElementById('full-sat-opacity-val');
+    if (fullVal) fullVal.textContent = `${val}%`;
+
+    const deskInput = document.getElementById('sat-opacity-slider');
+    if (deskInput && deskInput.value !== String(val)) deskInput.value = val;
+    const fullInput = document.getElementById('fullscreen-sat-opacity-slider');
+    if (fullInput && fullInput.value !== String(val)) fullInput.value = val;
+  }
+
   // ---------------------------------------------------------------------------
-  // 4b. INSAT-3DS Live Satellite Inspector Modal Controller
+  // 4b. INSAT-3DS Live Satellite Controller & Subtoolbar
   // ---------------------------------------------------------------------------
   function initSatelliteInspector() {
     const modal = document.getElementById('modal-satellite-viewer');
     const btnClose = document.getElementById('btn-close-sat-modal');
     const channelBtns = document.querySelectorAll('.sat-channel-btn');
+    const onMapChannelBtns = document.querySelectorAll('.sat-channel-pill');
     const satImg = document.getElementById('sat-live-image');
     const loader = document.getElementById('sat-img-loader');
+
+    // On-Map Channel Selector Pills
+    onMapChannelBtns.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        const ch = pill.getAttribute('data-channel');
+        onMapChannelBtns.forEach((p) => p.classList.remove('active'));
+        document.querySelectorAll(`.sat-channel-pill[data-channel="${ch}"]`).forEach((p) => p.classList.add('active'));
+        applySatelliteOverlay(ch, currentSatOpacity);
+      });
+    });
+
+    // On-Map Opacity Range Sliders
+    const deskSlider = document.getElementById('sat-opacity-slider');
+    if (deskSlider) {
+      deskSlider.addEventListener('input', (e) => setSatelliteOpacity(e.target.value));
+    }
+    const fullSlider = document.getElementById('fullscreen-sat-opacity-slider');
+    if (fullSlider) {
+      fullSlider.addEventListener('input', (e) => setSatelliteOpacity(e.target.value));
+    }
+
+    // On-Map Regional Zoom Preset Buttons (South India & All-India)
+    const btnSouth = document.getElementById('btn-view-south-india');
+    if (btnSouth) {
+      btnSouth.addEventListener('click', () => {
+        if (desktopMap) desktopMap.flyTo([12.5, 78.5], 7, { duration: 1.2 });
+      });
+    }
+    const btnAllIndia = document.getElementById('btn-view-all-india');
+    if (btnAllIndia) {
+      btnAllIndia.addEventListener('click', () => {
+        if (desktopMap) desktopMap.flyTo([21.0, 79.5], 5, { duration: 1.2 });
+      });
+    }
+    const btnFullSouth = document.getElementById('btn-full-south-india');
+    if (btnFullSouth) {
+      btnFullSouth.addEventListener('click', () => {
+        if (fullMap) fullMap.flyTo([12.5, 78.5], 7, { duration: 1.2 });
+      });
+    }
+    const btnFullAllIndia = document.getElementById('btn-full-all-india');
+    if (btnFullAllIndia) {
+      btnFullAllIndia.addEventListener('click', () => {
+        if (fullMap) fullMap.flyTo([21.0, 79.5], 5, { duration: 1.2 });
+      });
+    }
 
     if (btnClose && modal) {
       btnClose.addEventListener('click', () => {
