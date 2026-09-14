@@ -61,7 +61,7 @@ from .services.aapda_mitra_service import aapda_mitra_service, AapdaMitraService
 from .services.satellite_service import satellite_service
 from .services.fishermen_voyage_service import fishermen_voyage_service
 from .services.unhdp_service import unhdp_service
-from .models.schemas import UNHDPFeedResponse
+from .models.schemas import UNHDPFeedResponse, UNHDPCompoundRiskResponse
 
 
 def run_security_preflight_check():
@@ -597,6 +597,21 @@ async def get_unhdp_feed(
     from IMD, INCOIS, CWC, NDMA, and ISRO into a single high-throughput GeoJSON contract.
     """
     return unhdp_service.get_unified_feed(lat=lat, lon=lon, agency=agency)
+
+
+@app.get("/api/unhdp/compound-risk", response_model=UNHDPCompoundRiskResponse)
+async def get_unhdp_compound_risk(
+    lat: float = Query(13.0827, ge=-90.0, le=90.0, description="Latitude"),
+    lon: float = Query(80.2707, ge=-180.0, le=180.0, description="Longitude"),
+    radius_km: float = Query(25.0, ge=1.0, le=100.0, description="Radius in km for multi-hazard aggregation"),
+):
+    """
+    Mausam-Chakra Cross-Agency Compound Disaster Risk Index (CDRI).
+    Synthesizes non-linear interactions across IMD Doppler rain rate, CWC river flood stages,
+    and INCOIS ocean swell buoys to detect backwater locks, pluvial-fluvial inundations, and maritime tempests.
+    """
+    return unhdp_service.calculate_compound_risk(lat=lat, lon=lon, radius_km=radius_km)
+
 
 
 

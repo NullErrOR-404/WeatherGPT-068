@@ -341,3 +341,28 @@ class UNHDPFeedResponse(BaseModel):
     geohash: str
     timestamp: float
 
+
+class UNHDPCompoundRiskFactor(BaseModel):
+    agency: str
+    feature_id: str
+    headline: str
+    severity: str
+    metric_highlight: str
+    distance_km: float
+
+
+class UNHDPCompoundRiskResponse(BaseModel):
+    cdri_score: float  # 0.0 to 100.0
+    severity: str  # SAFE, WATCH, ALERT, WARNING
+    compound_type: str  # ESTUARINE_BACKWATER_SURGE, URBAN_FLASH_INUNDATION, COASTAL_MARITIME_TEMPEST, AGRO_INUNDATION_CASCADE, ISOLATED_HAZARD, NOMINAL_STABLE
+    interaction_multiplier: float  # 1.0 to 1.75
+    headline: str
+    citizen_directive: str
+    technical_assessment: str
+    co_occurring_factors: List[UNHDPCompoundRiskFactor]
+    radius_km: float
+    center_latitude: float
+    center_longitude: float
+    timestamp: float
+
+

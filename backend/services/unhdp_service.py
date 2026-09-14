@@ -17,6 +17,8 @@ from backend.models.schemas import (
     UNHDPFeedResponse,
     AgencyProvenance,
     UNHDPCategory,
+    UNHDPCompoundRiskFactor,
+    UNHDPCompoundRiskResponse,
 )
 
 
@@ -166,6 +168,29 @@ class UNHDPService:
                     "level_trend": "RISING",
                 },
                 citizen_advisory="Water release upstream. Farmers along Cauvery delta canals should secure pump sets and low-lying livestock.",
+                official_bulletin_url="https://ffs.india-water.gov.in/",
+                valid_until=expiry_4h,
+                timestamp=now,
+            ),
+            UNHDPFeature(
+                id="CWC-GAUGE-ADY-01",
+                agency=AgencyProvenance.CWC.value,
+                agency_name="Central Water Commission (Ministry of Jal Shakti)",
+                category=UNHDPCategory.HYDROLOGICAL_RIVER.value,
+                severity="ALERT",
+                title="CWC Adyar River Basin Gauge: Saidapet Flood Stage Rising",
+                latitude=13.0180,
+                longitude=80.2220,
+                metrics={
+                    "gauge_station": "Adyar Saidapet Bridge",
+                    "river_name": "Adyar",
+                    "current_level_m": 8.45,
+                    "warning_level_m": 8.00,
+                    "danger_level_m": 9.00,
+                    "discharge_cusecs": 18500,
+                    "level_trend": "RISING",
+                },
+                citizen_advisory="Adyar river stage running at 94% of danger mark. Water release from Chembarambakkam reservoir expected. Low-lying riverbanks on high alert.",
                 official_bulletin_url="https://ffs.india-water.gov.in/",
                 valid_until=expiry_4h,
                 timestamp=now,
@@ -322,5 +347,210 @@ class UNHDPService:
             timestamp=now,
         )
 
+    def calculate_compound_risk(
+        self, lat: float, lon: float, radius_km: float = 25.0
+    ) -> UNHDPCompoundRiskResponse:
+        """
+        Mausam-Chakra Cross-Agency Compound Disaster Risk Index (CDRI).
+        Physics-grounded non-linear multi-hazard interaction model.
+        Cross-correlates IMD radar/AWS, CWC river flood stages, and INCOIS marine surge buoys.
+        """
+        now = time.time()
+        cache_key = f"cdri_{round(lat, 2)}_{round(lon, 2)}_{round(radius_km, 1)}"
+        if cache_key in self._cache:
+            entry = self._cache[cache_key]
+            if now - entry["cached_at"] < self._cache_ttl_seconds:
+                return entry["data"]
+
+        all_features = self._generate_sovereign_features()
+        nearby_features: List[tuple[UNHDPFeature, float]] = []
+
+        for feat in all_features:
+            dist = _haversine_distance_km(lat, lon, feat.latitude, feat.longitude)
+            if dist <= radius_km:
+                nearby_features.append((feat, dist))
+
+        # Sort by distance
+        nearby_features.sort(key=lambda x: x[1])
+
+        imd_score = 0.0
+        cwc_score = 0.0
+        incois_score = 0.0
+        co_occurring_factors: List[UNHDPCompoundRiskFactor] = []
+
+        for feat, dist in nearby_features:
+            metrics = feat.metrics
+            if feat.agency == "IMD":
+                dbz = float(metrics.get("radar_reflectivity_dbz", 0.0))
+                rain_mm = float(metrics.get("hourly_rainfall_mm", 0.0))
+                score = min(100.0, max(0.0, (dbz - 10.0) * 2.0 + rain_mm * 2.5))
+                if score > imd_score:
+                    imd_score = score
+                co_occurring_factors.append(
+                    UNHDPCompoundRiskFactor(
+                        agency="IMD",
+                        feature_id=feat.id,
+                        headline=feat.title,
+                        severity=feat.severity,
+                        metric_highlight=f"Radar {dbz:.1f} dBZ • {rain_mm:.1f} mm/h rain",
+                        distance_km=round(dist, 1),
+                    )
+                )
+            elif feat.agency == "CWC":
+                curr_lvl = float(metrics.get("current_level_m") or metrics.get("current_water_level_m") or 0.0)
+                danger_lvl = float(metrics.get("danger_level_m") or metrics.get("danger_mark_m") or metrics.get("warning_level_m") or 1.0)
+                discharge = float(metrics.get("discharge_cusecs") or metrics.get("discharge_rate_cusecs") or 0.0)
+                ratio = curr_lvl / danger_lvl if danger_lvl > 0 else 0.0
+
+                if ratio >= 1.0:
+                    score = 80.0 + min(20.0, (ratio - 1.0) * 100.0)
+                elif ratio >= 0.85:
+                    score = 40.0 + ((ratio - 0.85) / 0.15) * 40.0
+                else:
+                    score = ratio * 40.0
+
+                if score > cwc_score:
+                    cwc_score = score
+                co_occurring_factors.append(
+                    UNHDPCompoundRiskFactor(
+                        agency="CWC",
+                        feature_id=feat.id,
+                        headline=feat.title,
+                        severity=feat.severity,
+                        metric_highlight=f"Stage {curr_lvl:.2f}m / {danger_lvl:.2f}m ({ratio*100:.0f}%) • {discharge:,.0f} cusecs",
+                        distance_km=round(dist, 1),
+                    )
+                )
+            elif feat.agency == "INCOIS":
+                hs = float(metrics.get("significant_wave_height_m") or metrics.get("wave_crest_m") or 0.0)
+                swell_sec = float(metrics.get("peak_period_sec") or metrics.get("swell_period_sec") or 0.0)
+                score = min(100.0, max(0.0, (hs / 4.0) * 100.0))
+                if score > incois_score:
+                    incois_score = score
+                co_occurring_factors.append(
+                    UNHDPCompoundRiskFactor(
+                        agency="INCOIS",
+                        feature_id=feat.id,
+                        headline=feat.title,
+                        severity=feat.severity,
+                        metric_highlight=f"Swell {hs:.2f}m Hs • {swell_sec:.1f}s period",
+                        distance_km=round(dist, 1),
+                    )
+                )
+            elif feat.agency in ("NDMA", "ISRO"):
+                sev = feat.severity
+                co_occurring_factors.append(
+                    UNHDPCompoundRiskFactor(
+                        agency=feat.agency,
+                        feature_id=feat.id,
+                        headline=feat.title,
+                        severity=sev,
+                        metric_highlight=feat.citizen_advisory[:60] + "...",
+                        distance_km=round(dist, 1),
+                    )
+                )
+
+        scores = [s for s in [imd_score, cwc_score, incois_score] if s > 0.0]
+        if not scores:
+            scores = [5.0]
+
+        max_score = max(scores)
+        mean_score = sum(scores) / len(scores)
+
+        # Physics-grounded compound interaction multiplier
+        if cwc_score >= 40.0 and incois_score >= 40.0:
+            if imd_score >= 35.0:
+                interaction_multiplier = 1.60
+                compound_type = "ESTUARINE_BACKWATER_SURGE"
+                headline = "CRITICAL: Estuarine Backwater Inundation Lockout"
+                citizen_directive = (
+                    "URGENT: River runoff blocked by marine swell tidal barrier. High flood risk in coastal lowlands. "
+                    "Move livestock and storehouse goods to elevated ground immediately. Follow Aapda Mitra evacuation routes."
+                )
+                technical_assessment = (
+                    f"Triple hazard convergence: CWC River stage ({cwc_score:.0f}/100) + INCOIS Marine Swell ({incois_score:.0f}/100) "
+                    f"+ IMD Convective Inflow ({imd_score:.0f}/100). Gravity storm drains hydraulically locked by tidal surge (1.60x penalty)."
+                )
+            else:
+                interaction_multiplier = 1.35
+                compound_type = "ESTUARINE_BACKWATER_SURGE"
+                headline = "Estuarine Backwater Drainage Retardation"
+                citizen_directive = (
+                    "CAUTION: High ocean swell retarding river basin discharge into the sea. Low-lying estuarine areas vulnerable to waterlogging."
+                )
+                technical_assessment = (
+                    f"Dual hazard interaction: CWC River stage ({cwc_score:.0f}/100) opposed by INCOIS offshore swell ({incois_score:.0f}/100). "
+                    "Effective drainage coefficient reduced by 35%."
+                )
+        elif imd_score >= 50.0 and cwc_score >= 40.0:
+            interaction_multiplier = 1.30
+            compound_type = "URBAN_FLASH_INUNDATION"
+            headline = "Severe Urban Inundation & Flash Basin Surge"
+            citizen_directive = (
+                "Heavy convective rain cell coinciding with high river basin levels. Road subways and low-lying habitations prone to rapid waterlogging."
+            )
+            technical_assessment = (
+                f"Compound pluvial + fluvial stress: IMD radar ({imd_score:.0f}/100) + CWC river ({cwc_score:.0f}/100). 1.30x run-off amplification."
+            )
+        elif incois_score >= 50.0 and imd_score >= 40.0:
+            interaction_multiplier = 1.25
+            compound_type = "COASTAL_MARITIME_TEMPEST"
+            headline = "Coastal Maritime Storm & High Swell Squall"
+            citizen_directive = (
+                "Total prohibition on coastal venturing and artisanal fishing crafts. Rough seas with squally convective wind gusts."
+            )
+            technical_assessment = (
+                f"Compound marine atmosphere: INCOIS ocean swell ({incois_score:.0f}/100) + IMD maritime convective gusts ({imd_score:.0f}/100)."
+            )
+        elif cwc_score >= 50.0:
+            interaction_multiplier = 1.10
+            compound_type = "AGRO_INUNDATION_CASCADE"
+            headline = "Riverine High Discharge Alert"
+            citizen_directive = "River basin running near danger mark. Farmers secure riverbank pump sets and agricultural equipment."
+            technical_assessment = f"Elevated fluvial discharge monitored by CWC ({cwc_score:.0f}/100)."
+        elif max_score >= 35.0:
+            interaction_multiplier = 1.0
+            compound_type = "ISOLATED_HAZARD"
+            headline = "Isolated Single-Agency Weather Event"
+            citizen_directive = "Standard localized precautions. Monitor official agency advisories."
+            technical_assessment = f"Dominant single driver with maximum score {max_score:.0f}/100."
+        else:
+            interaction_multiplier = 1.0
+            compound_type = "NOMINAL_STABLE"
+            headline = "Nominal Hydro-Meteorological Baseline"
+            citizen_directive = "Atmospheric, riverine, and coastal conditions are normal and stable. Safe for routine activities."
+            technical_assessment = "All monitored parameters within safe sovereign thresholds across IMD, INCOIS, and CWC."
+
+        raw_cdri = (max_score * 0.6 + mean_score * 0.4) * interaction_multiplier
+        cdri_score = min(100.0, max(0.0, round(raw_cdri, 1)))
+
+        if cdri_score >= 75.0:
+            severity = "WARNING"
+        elif cdri_score >= 50.0:
+            severity = "ALERT"
+        elif cdri_score >= 25.0:
+            severity = "WATCH"
+        else:
+            severity = "SAFE"
+
+        response = UNHDPCompoundRiskResponse(
+            cdri_score=cdri_score,
+            severity=severity,
+            compound_type=compound_type,
+            interaction_multiplier=interaction_multiplier,
+            headline=headline,
+            citizen_directive=citizen_directive,
+            technical_assessment=technical_assessment,
+            co_occurring_factors=co_occurring_factors,
+            radius_km=radius_km,
+            center_latitude=lat,
+            center_longitude=lon,
+            timestamp=now,
+        )
+
+        self._cache[cache_key] = {"data": response, "cached_at": now}
+        return response
+
 
 unhdp_service = UNHDPService()
+
