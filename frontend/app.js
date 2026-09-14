@@ -662,6 +662,9 @@
     // Initialize active layer (INSAT-3DS live satellite overlay on map)
     const initialLayer = (desktopLayerSelect && desktopLayerSelect.value) || 'satellite';
     updateMapOverlayLayer(initialLayer);
+
+    // Initialize Sovereign UNH-DP Multi-Agency Grid (IMD, INCOIS, CWC, NDMA, ISRO)
+    initUNHDPGrid();
   }
 
   function syncLayerSelects(val) {
@@ -671,6 +674,163 @@
     if (s1 && s1.value !== val) s1.value = val;
     if (s2 && s2.value !== val) s2.value = val;
     if (s3 && s3.value !== val) s3.value = val;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sovereign UNH-DP Multi-Agency Grid (IMD, INCOIS, CWC, NDMA, ISRO)
+  // ---------------------------------------------------------------------------
+  let unhdpDesktopLayerGroup = null;
+  let unhdpFullLayerGroup = null;
+  state.activeUnhdpAgency = 'all';
+
+  function initUNHDPGrid() {
+    const pills = document.querySelectorAll('.unhdp-agency-pill');
+    pills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        pills.forEach((p) => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.activeUnhdpAgency = pill.getAttribute('data-agency') || 'all';
+        fetchUNHDPFeed();
+      });
+    });
+
+    const btnToggleDrawer = document.getElementById('btn-toggle-unhdp-drawer');
+    const drawer = document.getElementById('unhdp-intelligence-drawer');
+    const backdrop = document.getElementById('unhdp-drawer-backdrop');
+    const btnCloseDrawer = document.getElementById('btn-close-unhdp-drawer');
+
+    if (btnToggleDrawer && drawer && backdrop) {
+      btnToggleDrawer.addEventListener('click', () => {
+        drawer.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+      });
+    }
+
+    if (btnCloseDrawer && drawer && backdrop) {
+      btnCloseDrawer.addEventListener('click', () => {
+        drawer.classList.add('hidden');
+        backdrop.classList.add('hidden');
+      });
+    }
+
+    if (backdrop && drawer) {
+      backdrop.addEventListener('click', () => {
+        drawer.classList.add('hidden');
+        backdrop.classList.add('hidden');
+      });
+    }
+
+    fetchUNHDPFeed();
+  }
+
+  async function fetchUNHDPFeed() {
+    try {
+      const res = await fetch(`/api/unhdp/feed?lat=${state.lat}&lon=${state.lon}&agency=${state.activeUnhdpAgency}`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      renderUNHDPSyncStatus(data.agencies_synced || []);
+      renderUNHDPBulletins(data.features || []);
+      renderUNHDPMapMarkers(data.features || []);
+    } catch (err) {
+      console.warn('UNHDP feed sync warning:', err);
+    }
+  }
+
+  function renderUNHDPSyncStatus(agencies) {
+    const container = document.getElementById('unhdp-agency-sync-cards');
+    if (!container) return;
+    container.innerHTML = agencies.map((a) => `
+      <div class="unhdp-sync-pill synced" title="${a.agency_name} • Last sync: ${a.last_sync_ist}">
+        <span class="sync-dot"></span>
+        <span>${a.agency}: ${a.records_count} Feeds</span>
+      </div>
+    `).join('');
+  }
+
+  function renderUNHDPBulletins(features) {
+    const container = document.getElementById('unhdp-feed-container');
+    if (!container) return;
+
+    if (!features || features.length === 0) {
+      container.innerHTML = '<div class="unhdp-loading-shimmer">No active emergency alerts for selected agency. All systems normal.</div>';
+      return;
+    }
+
+    container.innerHTML = features.map((f) => {
+      const agencyKey = f.agency.toLowerCase();
+      const severityKey = f.severity.toLowerCase();
+
+      let metricsHtml = '';
+      if (f.metrics) {
+        metricsHtml = Object.entries(f.metrics).slice(0, 4).map(([k, v]) => `
+          <span class="bulletin-metric-chip"><strong>${k.replace(/_/g, ' ')}:</strong> ${v}</span>
+        `).join('');
+      }
+
+      const validStr = new Date(f.valid_until * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      return `
+        <div class="unhdp-bulletin-card" data-feature-id="${f.id}">
+          <div class="bulletin-header">
+            <span class="bulletin-agency-tag ${agencyKey}">${f.agency}</span>
+            <span class="bulletin-severity ${severityKey}">${f.severity}</span>
+          </div>
+          <h4 class="bulletin-title">${escapeHtml(f.title)}</h4>
+          <div class="bulletin-advisory">${escapeHtml(f.citizen_advisory)}</div>
+          <div class="bulletin-metrics-grid">${metricsHtml}</div>
+          <div class="bulletin-footer">
+            <span>Valid until ${validStr}</span>
+            <a href="${f.official_bulletin_url}" target="_blank" rel="noopener noreferrer" class="bulletin-link-btn">Official Bulletin &rarr;</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderUNHDPMapMarkers(features) {
+    if (desktopMap) {
+      if (unhdpDesktopLayerGroup) desktopMap.removeLayer(unhdpDesktopLayerGroup);
+      unhdpDesktopLayerGroup = L.layerGroup().addTo(desktopMap);
+    }
+    if (fullMap) {
+      if (unhdpFullLayerGroup) fullMap.removeLayer(unhdpFullLayerGroup);
+      unhdpFullLayerGroup = L.layerGroup().addTo(fullMap);
+    }
+
+    features.forEach((f) => {
+      const agencyKey = f.agency.toLowerCase();
+      const icon = L.divIcon({
+        className: 'unhdp-custom-icon',
+        html: `<div class="unhdp-map-marker ${agencyKey}" title="${f.agency}: ${f.title}">${f.agency}</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+
+      const popupHtml = `
+        <div style="font-family: inherit; min-width: 220px;">
+          <div style="font-size: 0.68rem; font-weight: 800; color: #0066FF; text-transform: uppercase;">${f.agency_name}</div>
+          <div style="font-weight: 800; font-size: 0.88rem; margin: 4px 0;">${escapeHtml(f.title)}</div>
+          <div style="font-size: 0.76rem; background: #F8FAFC; padding: 6px; border-radius: 4px; border-left: 3px solid #0066FF; margin-bottom: 6px;">
+            ${escapeHtml(f.citizen_advisory)}
+          </div>
+          <div style="font-size: 0.68rem; color: #64748B;">
+            <a href="${f.official_bulletin_url}" target="_blank" style="color: #0066FF; font-weight: 700;">View Official Ministry Bulletin &rarr;</a>
+          </div>
+        </div>
+      `;
+
+      if (desktopMap && unhdpDesktopLayerGroup) {
+        L.marker([f.latitude, f.longitude], { icon: icon })
+          .bindPopup(popupHtml)
+          .addTo(unhdpDesktopLayerGroup);
+      }
+      if (fullMap && unhdpFullLayerGroup) {
+        L.marker([f.latitude, f.longitude], { icon: icon })
+          .bindPopup(popupHtml)
+          .addTo(unhdpFullLayerGroup);
+      }
+    });
   }
 
   function updateDbzScaleBarVisibility(layerType) {
@@ -1626,6 +1786,7 @@
             if (homeCloudEngine) homeCloudEngine.reanchor(state.lat, state.lon);
             if (desktopCloudEngine) desktopCloudEngine.reanchor(state.lat, state.lon);
             if (fullCloudEngine) fullCloudEngine.reanchor(state.lat, state.lon);
+            fetchUNHDPFeed();
           },
           (err) => {
             alert(`GPS acquisition failed: ${err.message}. Please pick your city from the list.`);
@@ -1683,6 +1844,7 @@
         if (homeCloudEngine) homeCloudEngine.reanchor(state.lat, state.lon);
         if (desktopCloudEngine) desktopCloudEngine.reanchor(state.lat, state.lon);
         if (fullCloudEngine) fullCloudEngine.reanchor(state.lat, state.lon);
+        fetchUNHDPFeed();
       });
     });
 

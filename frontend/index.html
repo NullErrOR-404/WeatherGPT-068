@@ -316,6 +316,26 @@
                 </div>
               </div>
 
+              <!-- UNH-DP Unified National Multi-Agency Ingestion Strip -->
+              <div class="unhdp-sync-strip" id="unhdp-sync-strip">
+                <div class="unhdp-title-tag">
+                  <span class="unhdp-live-dot"></span>
+                  <span class="unhdp-tag-text">UNH-DP SOVEREIGN GRID:</span>
+                </div>
+                <div class="unhdp-agency-pills" role="radiogroup" aria-label="Select Sovereign Agency Filter">
+                  <button class="unhdp-agency-pill active" data-agency="all" title="All Sovereign Authorities Synced">🏛️ All (5)</button>
+                  <button class="unhdp-agency-pill" data-agency="imd" title="India Meteorological Department">IMD</button>
+                  <button class="unhdp-agency-pill" data-agency="incois" title="INCOIS Ocean Buoys">INCOIS</button>
+                  <button class="unhdp-agency-pill" data-agency="cwc" title="Central Water Commission River Gauges">CWC</button>
+                  <button class="unhdp-agency-pill" data-agency="ndma" title="NDMA SACHET Disaster Alerts">NDMA</button>
+                  <button class="unhdp-agency-pill" data-agency="isro" title="ISRO INSAT-3DS Radiance">ISRO</button>
+                </div>
+                <button class="unhdp-drawer-trigger-btn" id="btn-toggle-unhdp-drawer" title="Open National Intelligence Drawer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                  <span>Intelligence Feed</span>
+                </button>
+              </div>
+
               <!-- Desktop Map Container -->
               <div class="desktop-map-viewport">
                 <div id="desktop-live-map" class="desktop-live-map" aria-label="Desktop Live Weather Map"></div>
@@ -830,6 +850,29 @@
       </div>
     </div>
   </div>
+
+  <!-- UNH-DP Slide-out National Intelligence Drawer -->
+  <div class="unhdp-drawer-backdrop hidden" id="unhdp-drawer-backdrop"></div>
+  <aside class="unhdp-intelligence-drawer hidden" id="unhdp-intelligence-drawer" aria-label="National Hydro-Meteorological Intelligence Drawer">
+    <div class="unhdp-drawer-header">
+      <div class="unhdp-drawer-title-group">
+        <span class="unhdp-drawer-badge">SOVEREIGN UNH-DP FEED</span>
+        <h3 class="unhdp-drawer-heading">National Hydro-Meteorological Intelligence</h3>
+        <p class="unhdp-drawer-sub">Unified multi-agency telemetry from IMD, INCOIS, CWC, NDMA &amp; ISRO</p>
+      </div>
+      <button class="unhdp-drawer-close-btn" id="btn-close-unhdp-drawer" aria-label="Close Drawer">&times;</button>
+    </div>
+
+    <!-- Live Multi-Agency Sync Status Indicator Pills -->
+    <div class="unhdp-agency-sync-cards" id="unhdp-agency-sync-cards">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Scrollable Unified National Bulletins Container -->
+    <div class="unhdp-feed-container" id="unhdp-feed-container">
+      <div class="unhdp-loading-shimmer">Synchronizing sovereign agency streams...</div>
+    </div>
+  </aside>
 
   <!-- Leaflet Map JS (Local Self-Contained) -->
   <script src="/leaflet.js"></script>
