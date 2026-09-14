@@ -86,6 +86,10 @@ html, body {
   overflow-x: hidden;
 }
 
+.hidden {
+  display: none !important;
+}
+
 button {
   font-family: inherit;
   border: none;
@@ -3072,6 +3076,10 @@ button {
   -webkit-backdrop-filter: blur(4px);
   z-index: 2100;
   transition: opacity 0.25s ease;
+}
+
+.unhdp-drawer-backdrop.hidden {
+  display: none !important;
 }
 
 .unhdp-intelligence-drawer {
