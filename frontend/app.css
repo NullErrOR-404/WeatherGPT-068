@@ -3314,5 +3314,287 @@ button {
   100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
 
+/* ========================================================================= */
+/* MAUSAM-CHAKRA FLOATING SOVEREIGN HUD RING & COMPOUND BREAKDOWN MODAL      */
+/* ========================================================================= */
+
+.mausam-chakra-hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.chakra-hud-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 8px;
+  background: rgba(10, 37, 64, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  user-select: none;
+}
+
+.chakra-hud-main:hover {
+  transform: translateY(-1px) scale(1.02);
+  background: rgba(10, 37, 64, 0.96);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.chakra-ring-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chakra-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.chakra-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 4.5;
+}
+
+.chakra-fill {
+  fill: none;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+}
+
+.chakra-fill.safe { stroke: #10B981; }
+.chakra-fill.watch { stroke: #F59E0B; }
+.chakra-fill.alert { stroke: #F97316; }
+.chakra-fill.warning { stroke: #EF4444; }
+
+.chakra-score-center {
+  position: absolute;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: -0.5px;
+}
+
+.chakra-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chakra-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chakra-logo-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #E2E8F0;
+  letter-spacing: 0.3px;
+}
+
+.chakra-severity-pill {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.chakra-severity-pill.safe { background: rgba(16, 185, 129, 0.25); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.chakra-severity-pill.watch { background: rgba(245, 158, 11, 0.25); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.4); }
+.chakra-severity-pill.alert { background: rgba(249, 115, 22, 0.25); color: #FB923C; border: 1px solid rgba(249, 115, 22, 0.4); }
+.chakra-severity-pill.warning { background: rgba(239, 68, 68, 0.3); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.5); }
+
+.chakra-type-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #CBD5E1;
+  white-space: nowrap;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chakra-expand-icon {
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
+/* Chakra Breakdown Modal Sheet */
+.chakra-breakdown-card {
+  max-width: 580px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chakra-modal-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.chakra-multiplier-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.12), rgba(239, 68, 68, 0.18));
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.multiplier-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  padding: 6px 10px;
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid #EF4444;
+  border-radius: 8px;
+  color: #F87171;
+  text-align: center;
+}
+
+.multiplier-val {
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.multiplier-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
+.multiplier-desc {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #E2E8F0;
+  margin: 0;
+}
+
+.chakra-directive-box {
+  padding: 12px 14px;
+  background: rgba(220, 38, 38, 0.15);
+  border-left: 4px solid #DC2626;
+  border-radius: 0 10px 10px 0;
+  margin-bottom: 16px;
+}
+
+.chakra-directive-box .directive-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #F87171;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.chakra-directive-box .directive-text {
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: #F1F5F9;
+  margin: 0;
+}
+
+.chakra-factors-heading {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+}
+
+.chakra-factors-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.chakra-factor-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.chakra-factor-agency-badge {
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.chakra-factor-agency-badge.imd { background: #0A2540; }
+.chakra-factor-agency-badge.incois { background: #0284C7; }
+.chakra-factor-agency-badge.cwc { background: #0D9488; }
+.chakra-factor-agency-badge.ndma { background: #DC2626; }
+.chakra-factor-agency-badge.isro { background: #EA580C; }
+
+.chakra-factor-content {
+  flex: 1;
+}
+
+.chakra-factor-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #F8FAFC;
+  margin: 0 0 3px 0;
+}
+
+.chakra-factor-metric {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #38BDF8;
+}
+
+.chakra-factor-dist {
+  font-size: 0.7rem;
+  color: #64748B;
+  margin-left: 6px;
+}
+
+
 
 

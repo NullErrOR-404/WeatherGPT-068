@@ -721,6 +721,7 @@
     }
 
     fetchUNHDPFeed();
+    initMausamChakra();
   }
 
   async function fetchUNHDPFeed() {
@@ -732,6 +733,7 @@
       renderUNHDPSyncStatus(data.agencies_synced || []);
       renderUNHDPBulletins(data.features || []);
       renderUNHDPMapMarkers(data.features || []);
+      fetchAndRenderCompoundRisk();
     } catch (err) {
       console.warn('UNHDP feed sync warning:', err);
     }
@@ -831,6 +833,141 @@
           .addTo(unhdpFullLayerGroup);
       }
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mausam-Chakra Cross-Agency Compound Disaster Risk Index (CDRI)
+  // ---------------------------------------------------------------------------
+  let currentChakraData = null;
+
+  function initMausamChakra() {
+    const hud = document.getElementById('mausam-chakra-hud');
+    const btnDetails = document.getElementById('btn-chakra-details');
+    const modal = document.getElementById('modal-chakra-breakdown');
+    const btnClose = document.getElementById('btn-close-chakra-modal');
+
+    if (hud && window.L && L.DomEvent) {
+      L.DomEvent.disableClickPropagation(hud);
+      L.DomEvent.disableScrollPropagation(hud);
+    }
+
+    if (btnDetails && modal) {
+      btnDetails.addEventListener('click', (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (currentChakraData) {
+          renderChakraBreakdownModal(currentChakraData);
+        }
+        modal.classList.remove('hidden');
+      });
+    }
+
+    if (btnClose && modal) {
+      btnClose.addEventListener('click', () => {
+        modal.classList.add('hidden');
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      });
+    }
+
+    fetchAndRenderCompoundRisk();
+  }
+
+  async function fetchAndRenderCompoundRisk() {
+    try {
+      const res = await fetch(`/api/unhdp/compound-risk?lat=${state.lat}&lon=${state.lon}&radius_km=25.0`);
+      if (!res.ok) return;
+      const data = await res.json();
+      currentChakraData = data;
+      renderMausamChakraHUD(data);
+    } catch (err) {
+      console.warn('Mausam-Chakra compound risk sync error:', err);
+    }
+  }
+
+  function renderMausamChakraHUD(data) {
+    const scoreVal = document.getElementById('chakra-score-val');
+    const fillArc = document.getElementById('chakra-fill-arc');
+    const sevPill = document.getElementById('chakra-sev-pill');
+    const typeHeadline = document.getElementById('chakra-type-headline');
+
+    if (scoreVal) scoreVal.textContent = Math.round(data.cdri_score);
+
+    const severityClass = (data.severity || 'safe').toLowerCase();
+    if (sevPill) {
+      sevPill.textContent = data.severity;
+      sevPill.className = `chakra-severity-pill ${severityClass}`;
+    }
+
+    if (typeHeadline) {
+      const typeLabels = {
+        'ESTUARINE_BACKWATER_SURGE': 'Estuarine Backwater Lock',
+        'URBAN_FLASH_INUNDATION': 'Urban Pluvial Flash Flood',
+        'COASTAL_MARITIME_TEMPEST': 'Coastal Marine Tempest',
+        'AGRO_INUNDATION_CASCADE': 'Agro Basin Fluvial Surge',
+        'ISOLATED_HAZARD': 'Isolated Hazard Alert',
+        'NOMINAL_STABLE': 'Nominal Weather Profile',
+      };
+      typeHeadline.textContent = typeLabels[data.compound_type] || data.compound_type.replace(/_/g, ' ');
+    }
+
+    if (fillArc) {
+      const circumference = 113.1;
+      const offset = circumference - (data.cdri_score / 100.0) * circumference;
+      fillArc.style.strokeDashoffset = offset;
+      fillArc.className = `chakra-fill ${severityClass}`;
+    }
+  }
+
+  function renderChakraBreakdownModal(data) {
+    const title = document.getElementById('chakra-modal-title');
+    const sub = document.getElementById('chakra-modal-sub');
+    const sevPill = document.getElementById('modal-chakra-sev-pill');
+    const multiplier = document.getElementById('modal-chakra-multiplier');
+    const techDesc = document.getElementById('modal-chakra-tech-desc');
+    const directive = document.getElementById('modal-chakra-directive');
+    const countSpan = document.getElementById('modal-factors-count');
+    const factorsGrid = document.getElementById('chakra-factors-grid');
+
+    if (title) title.textContent = data.headline;
+    if (sub) sub.textContent = `Center: ${data.center_latitude.toFixed(4)}°N, ${data.center_longitude.toFixed(4)}°E • Radius ${data.radius_km}km`;
+
+    const severityClass = (data.severity || 'safe').toLowerCase();
+    if (sevPill) {
+      sevPill.textContent = `${data.severity} (${data.cdri_score}/100 CDRI)`;
+      sevPill.className = `chakra-severity-pill ${severityClass}`;
+    }
+
+    if (multiplier) multiplier.textContent = `${data.interaction_multiplier.toFixed(2)}x`;
+    if (techDesc) techDesc.textContent = data.technical_assessment;
+    if (directive) directive.textContent = data.citizen_directive;
+    if (countSpan) countSpan.textContent = (data.co_occurring_factors || []).length;
+
+    if (factorsGrid) {
+      if (!data.co_occurring_factors || data.co_occurring_factors.length === 0) {
+        factorsGrid.innerHTML = '<div style="color:#94A3B8;font-size:0.8rem;">No co-occurring agency hazards detected within 25km.</div>';
+        return;
+      }
+
+      factorsGrid.innerHTML = data.co_occurring_factors.map((f) => {
+        const agClass = f.agency.toLowerCase();
+        return `
+          <div class="chakra-factor-item">
+            <span class="chakra-factor-agency-badge ${agClass}">${f.agency}</span>
+            <div class="chakra-factor-content">
+              <div class="chakra-factor-title">${escapeHtml(f.headline)}</div>
+              <div>
+                <span class="chakra-factor-metric">${escapeHtml(f.metric_highlight)}</span>
+                <span class="chakra-factor-dist">• ${f.distance_km} km away</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   }
 
   function updateDbzScaleBarVisibility(layerType) {
