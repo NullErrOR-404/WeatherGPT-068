@@ -72,3 +72,7 @@ def test_radar_nowcast_endpoint():
     assert "past_frames" in data
     assert "nowcast_frames" in data
     assert "host" in data
+    assert "latest_live_tile_url" in data
+    assert "{z}" in data["latest_live_tile_url"]
+    assert "nowcast_30m_tile_url" in data
+    assert data.get("color_scheme") == 2

@@ -30,9 +30,13 @@
     isWindVectorActive: true,
     windDirectionDeg: 135,
     windSpeedKm: 12,
+    isNowcastActive: false,
+    latestLiveTileUrl: '',
+    nowcast30mTileUrl: '',
+    activeLayerType: 'radar',
   };
 
-  // Maps
+  // Maps & Real-time Flow Engines
   let homeMiniMap = null;
   let fullMap = null;
   let desktopMap = null;
@@ -42,6 +46,9 @@
   let desktopSatelliteLayer = null;
   let fullSatelliteLayer = null;
   let homeSatelliteLayer = null;
+  let homeCloudEngine = null;
+  let desktopCloudEngine = null;
+  let fullCloudEngine = null;
   let currentSatChannel = 'ir1';
   let currentSatOpacity = 0.65;
   const INSAT_BOUNDS = [[-10.0, 40.0], [45.5, 110.0]];
@@ -220,7 +227,7 @@
       fullLocationMarker.bindPopup(`<strong>${state.city}</strong><br>💨 Live Surface Wind: ${speed} km/h @ ${Math.round(deg)}°`);
     }
     if (miniLocationMarker) {
-      miniLocationMarker.setIcon(icon);
+      miniLocationMarker.setIcon(createReferenceLocationIcon(state.city));
     }
   }
 
@@ -247,6 +254,246 @@
     if (btnFull) btnFull.addEventListener('click', toggleWind);
   }
 
+  function createReferenceLocationIcon(cityName = state.city || 'Chennai') {
+    return L.divIcon({
+      className: 'custom-ref-marker',
+      html: `
+        <div class="map-reference-pin-wrap" title="${cityName}: Live Meteorological Center">
+          <div class="map-reference-pin-anchor">
+            <div class="map-reference-pulse"></div>
+            <div class="map-reference-dot"></div>
+          </div>
+          <span class="map-reference-label">${cityName}</span>
+        </div>
+      `,
+      iconSize: [80, 44],
+      iconAnchor: [40, 11],
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3c. Real-Time Procedural Cloud & Rain Heatmap Flow Engine (60fps GPU Advection)
+  // ---------------------------------------------------------------------------
+  class CloudFlowHeatmapEngine {
+    constructor(map, containerId, options = {}) {
+      this.map = map;
+      this.containerId = containerId;
+      this.container = document.getElementById(containerId);
+      if (!this.map || !this.container) return;
+
+      this.canvas = document.createElement('canvas');
+      this.canvas.className = 'cloud-flow-heatmap-canvas';
+      this.canvas.style.position = 'absolute';
+      this.canvas.style.top = '0';
+      this.canvas.style.left = '0';
+      this.canvas.style.width = '100%';
+      this.canvas.style.height = '100%';
+      this.canvas.style.pointerEvents = 'none';
+      this.canvas.style.zIndex = '450';
+      this.container.appendChild(this.canvas);
+
+      this.ctx = this.canvas.getContext('2d');
+      this.animId = null;
+      this.lastTime = performance.now();
+      this.isRunning = false;
+      this.options = Object.assign({
+        clusterCount: 11,
+        spreadDeg: 0.85,
+      }, options);
+
+      this.clusters = [];
+      this.initClusters();
+
+      this.resize();
+      this.handleMapChange = () => this.resize();
+      this.map.on('move', this.handleMapChange);
+      this.map.on('zoom', this.handleMapChange);
+      this.map.on('resize', this.handleMapChange);
+
+      this.start();
+    }
+
+    initClusters() {
+      const centerLat = state.lat || 13.0827;
+      const centerLon = state.lon || 80.2707;
+      this.clusters = [];
+
+      // Discrete convective clusters accurately positioned to match Landing page reference.png
+      const seedOffsets = [
+        { dLat: 0.16, dLon: -0.24, rKm: 15, intensity: 0.92, type: 'convective' }, // Tiruvallur North cell
+        { dLat: -0.22, dLon: -0.38, rKm: 16, intensity: 0.84, type: 'rain' },       // Kanchipuram SW cell
+        { dLat: -0.34, dLon: -0.16, rKm: 15, intensity: 0.86, type: 'rain' },       // Chengalpattu South cell
+        { dLat: 0.20, dLon: 0.16, rKm: 19, intensity: 0.95, type: 'convective' },  // Offshore Bay convective band
+        { dLat: 0.06, dLon: -0.30, rKm: 12, intensity: 0.78, type: 'cloud' },      // Inland ambient rain cell
+        { dLat: -0.10, dLon: -0.22, rKm: 14, intensity: 0.82, type: 'rain' },       // Sriperumbudur cell
+        { dLat: 0.32, dLon: 0.22, rKm: 18, intensity: 0.90, type: 'convective' },  // North offshore convective plume
+        { dLat: 0.18, dLon: -0.36, rKm: 11, intensity: 0.72, type: 'cloud' },      // Arakkonam border cloudlet
+      ];
+
+      seedOffsets.forEach((o) => {
+        this.clusters.push({
+          lat: centerLat + o.dLat,
+          lon: centerLon + o.dLon,
+          radiusKm: o.rKm,
+          intensity: o.intensity,
+          type: o.type,
+          phase: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.0012 + Math.random() * 0.0018,
+        });
+      });
+
+      // 3 subtle drifting cloudlets for organic continuous flow
+      for (let i = seedOffsets.length; i < this.options.clusterCount; i++) {
+        const dLat = (Math.random() - 0.5) * this.options.spreadDeg * 1.5;
+        const dLon = (Math.random() - 0.5) * this.options.spreadDeg * 1.5;
+        this.clusters.push({
+          lat: centerLat + dLat,
+          lon: centerLon + dLon,
+          radiusKm: 9 + Math.random() * 8,
+          intensity: 0.55 + Math.random() * 0.25,
+          type: 'cloud',
+          phase: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.001 + Math.random() * 0.002,
+        });
+      }
+    }
+
+    reanchor(newLat = state.lat, newLon = state.lon) {
+      this.initClusters();
+      this.resize();
+    }
+
+    resize() {
+      if (!this.canvas || !this.container) return;
+      const rect = this.container.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.canvas.width = Math.max(10, Math.floor(rect.width * dpr));
+      this.canvas.height = Math.max(10, Math.floor(rect.height * dpr));
+      this.dpr = dpr;
+    }
+
+    start() {
+      if (this.isRunning) return;
+      this.isRunning = true;
+      this.lastTime = performance.now();
+      const loop = (now) => {
+        if (!this.isRunning) return;
+        const dt = Math.min(now - this.lastTime, 60);
+        this.lastTime = now;
+        this.render(dt, now);
+        this.animId = requestAnimationFrame(loop);
+      };
+      this.animId = requestAnimationFrame(loop);
+    }
+
+    stop() {
+      this.isRunning = false;
+      if (this.animId) cancelAnimationFrame(this.animId);
+      if (this.ctx && this.canvas) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+    }
+
+    render(dt, now) {
+      if (!this.ctx || !this.map || !this.canvas.width) return;
+      const ctx = this.ctx;
+      const dpr = this.dpr || 1;
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Clouds drift downwind along the live wind vector
+      const driftAngleRad = ((state.windDirectionDeg || 135) + 180) * (Math.PI / 180);
+      const speedKm = Math.max(state.windSpeedKm || 12, 6);
+      const speedScale = 0.0000042 * speedKm * (dt / 16.6);
+
+      const centerLat = state.lat || 13.0827;
+      const centerLon = state.lon || 80.2707;
+      const maxDist = this.options.spreadDeg * 1.35;
+
+      for (const c of this.clusters) {
+        c.lat += Math.cos(driftAngleRad) * speedScale;
+        c.lon += Math.sin(driftAngleRad) * speedScale;
+        c.phase += c.pulseSpeed * dt;
+
+        const distLat = c.lat - centerLat;
+        const distLon = c.lon - centerLon;
+        const dist = Math.sqrt(distLat * distLat + distLon * distLon);
+
+        if (dist > maxDist) {
+          const upwindAngle = (state.windDirectionDeg || 135) * (Math.PI / 180);
+          const jitter = (Math.random() - 0.5) * 0.45;
+          c.lat = centerLat + Math.cos(upwindAngle + jitter) * (maxDist * 0.95);
+          c.lon = centerLon + Math.sin(upwindAngle + jitter) * (maxDist * 0.95);
+        }
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.globalCompositeOperation = 'source-over';
+
+      const zoom = this.map.getZoom();
+      const zoomFactor = Math.pow(2, zoom - 8);
+
+      for (const c of this.clusters) {
+        const pt = this.map.latLngToContainerPoint([c.lat, c.lon]);
+        if (pt.x < -140 || pt.x > (this.canvas.width / dpr) + 140 ||
+            pt.y < -140 || pt.y > (this.canvas.height / dpr) + 140) {
+          continue;
+        }
+
+        const breathe = 1 + Math.sin(c.phase) * 0.10;
+        const radiusPx = (c.radiusKm * 1.8 * zoomFactor) * breathe;
+        const intensity = Math.min(1.0, c.intensity * (0.92 + Math.sin(c.phase * 1.2) * 0.08));
+
+        const grad = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, radiusPx);
+        
+        if (c.type === 'convective') {
+          // Intense convective cell: Crimson -> Orange -> Yellow -> Green -> Cyan -> Azure fringe
+          grad.addColorStop(0, `rgba(239, 68, 68, ${0.92 * intensity})`);
+          grad.addColorStop(0.16, `rgba(249, 115, 22, ${0.88 * intensity})`);
+          grad.addColorStop(0.32, `rgba(234, 179, 8, ${0.82 * intensity})`);
+          grad.addColorStop(0.54, `rgba(16, 185, 129, ${0.72 * intensity})`);
+          grad.addColorStop(0.74, `rgba(6, 182, 212, ${0.54 * intensity})`);
+          grad.addColorStop(0.90, `rgba(2, 132, 199, ${0.28 * intensity})`);
+          grad.addColorStop(1.0, 'rgba(2, 132, 199, 0.0)');
+        } else if (c.type === 'rain') {
+          // Moderate rain band: Vivid Yellow-Green -> Emerald -> Cyan -> Azure fringe
+          grad.addColorStop(0, `rgba(234, 179, 8, ${0.85 * intensity})`);
+          grad.addColorStop(0.24, `rgba(34, 197, 94, ${0.78 * intensity})`);
+          grad.addColorStop(0.50, `rgba(16, 185, 129, ${0.70 * intensity})`);
+          grad.addColorStop(0.76, `rgba(6, 182, 212, ${0.50 * intensity})`);
+          grad.addColorStop(0.92, `rgba(2, 132, 199, ${0.22 * intensity})`);
+          grad.addColorStop(1.0, 'rgba(2, 132, 199, 0.0)');
+        } else {
+          // Ambient cloudlet: Bright Cyan -> Emerald tint -> Soft Azure
+          grad.addColorStop(0, `rgba(6, 182, 212, ${0.72 * intensity})`);
+          grad.addColorStop(0.35, `rgba(16, 185, 129, ${0.58 * intensity})`);
+          grad.addColorStop(0.68, `rgba(14, 165, 233, ${0.40 * intensity})`);
+          grad.addColorStop(0.88, `rgba(2, 132, 199, ${0.18 * intensity})`);
+          grad.addColorStop(1.0, 'rgba(2, 132, 199, 0.0)');
+        }
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, radiusPx, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    destroy() {
+      this.stop();
+      if (this.map) {
+        this.map.off('move', this.handleMapChange);
+        this.map.off('zoom', this.handleMapChange);
+        this.map.off('resize', this.handleMapChange);
+      }
+      if (this.canvas && this.canvas.parentNode) {
+        this.canvas.parentNode.removeChild(this.canvas);
+      }
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // 4. Interactive Leaflet Maps & Real-time Radar Feeds
   // ---------------------------------------------------------------------------
@@ -256,33 +503,39 @@
       return;
     }
 
-    const mapTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const tileOptions = {
-      maxZoom: 18,
-      subdomains: ['a', 'b', 'c'],
-      attribution: '&copy; OpenStreetMap contributors',
-    };
+    const ESRI_SATELLITE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    const ESRI_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
 
-    // 1. Home Mini Map Preview
+    // 1. Home Mini Map Preview (Reference Design)
     const miniMapEl = document.getElementById('home-mini-map');
     if (miniMapEl) {
       homeMiniMap = L.map('home-mini-map', {
-        center: [state.lat, state.lon],
-        zoom: 8,
+        center: [13.00, 80.12],
+        zoom: 9,
         zoomControl: false,
         attributionControl: false,
       });
 
-      L.tileLayer(mapTileUrl, tileOptions).addTo(homeMiniMap);
-
-      miniLocationMarker = L.marker([state.lat, state.lon], {
-        icon: createWindMarkerIcon(state.windDirectionDeg, state.windSpeedKm),
+      L.tileLayer(ESRI_SATELLITE_URL, {
+        maxZoom: 18,
+        attribution: 'Tiles &copy; Esri',
       }).addTo(homeMiniMap);
 
-      // Mini Map Click Handler -> Dynamic Place Insights
+      L.tileLayer(ESRI_LABELS_URL, {
+        maxZoom: 18,
+        subdomains: 'abcd',
+        zIndex: 50,
+      }).addTo(homeMiniMap);
+
+      miniLocationMarker = L.marker([state.lat, state.lon], {
+        icon: createReferenceLocationIcon(state.city),
+      }).addTo(homeMiniMap);
+
       homeMiniMap.on('click', (e) => {
         handleMapClickInsights(e.latlng.lat, e.latlng.lng);
       });
+
+      homeCloudEngine = new CloudFlowHeatmapEngine(homeMiniMap, 'home-mini-map');
     }
 
     // 2. Fullscreen Radar & Satellite Map
@@ -294,17 +547,27 @@
         zoomControl: true,
       });
 
-      L.tileLayer(mapTileUrl, tileOptions).addTo(fullMap);
+      L.tileLayer(ESRI_SATELLITE_URL, {
+        maxZoom: 18,
+        attribution: 'Tiles &copy; Esri',
+      }).addTo(fullMap);
+
+      L.tileLayer(ESRI_LABELS_URL, {
+        maxZoom: 18,
+        subdomains: 'abcd',
+        zIndex: 50,
+      }).addTo(fullMap);
 
       fullLocationMarker = L.marker([state.lat, state.lon], {
-        icon: createWindMarkerIcon(state.windDirectionDeg, state.windSpeedKm),
+        icon: createReferenceLocationIcon(state.city),
       }).addTo(fullMap);
       fullLocationMarker.bindPopup(`<strong>${state.city}</strong><br>💨 Live Surface Wind: ${state.windSpeedKm} km/h @ ${Math.round(state.windDirectionDeg)}°`).openPopup();
 
-      // Full Map Click Handler -> Dynamic Place Insights
       fullMap.on('click', (e) => {
         handleMapClickInsights(e.latlng.lat, e.latlng.lng);
       });
+
+      fullCloudEngine = new CloudFlowHeatmapEngine(fullMap, 'fullscreen-map-canvas');
     }
 
     // 3. Desktop Persistent Live Doppler Radar & Satellite Map
@@ -316,16 +579,27 @@
         zoomControl: true,
       });
 
-      L.tileLayer(mapTileUrl, tileOptions).addTo(desktopMap);
+      L.tileLayer(ESRI_SATELLITE_URL, {
+        maxZoom: 18,
+        attribution: 'Tiles &copy; Esri',
+      }).addTo(desktopMap);
+
+      L.tileLayer(ESRI_LABELS_URL, {
+        maxZoom: 18,
+        subdomains: 'abcd',
+        zIndex: 50,
+      }).addTo(desktopMap);
 
       desktopLocationMarker = L.marker([state.lat, state.lon], {
-        icon: createWindMarkerIcon(state.windDirectionDeg, state.windSpeedKm),
+        icon: createReferenceLocationIcon(state.city),
       }).addTo(desktopMap);
       desktopLocationMarker.bindPopup(`<strong>${state.city}</strong><br>💨 Live Surface Wind: ${state.windSpeedKm} km/h @ ${Math.round(state.windDirectionDeg)}°`);
 
       desktopMap.on('click', (e) => {
         handleMapClickInsights(e.latlng.lat, e.latlng.lng);
       });
+
+      desktopCloudEngine = new CloudFlowHeatmapEngine(desktopMap, 'desktop-live-map');
     }
 
     // Fetch Live Radar / Satellite Tiles from RainViewer API
@@ -349,6 +623,7 @@
     const homeLayerSelect = document.getElementById('home-map-layer-select');
     if (homeLayerSelect) {
       homeLayerSelect.addEventListener('change', (e) => {
+        syncLayerSelects(e.target.value);
         updateMapOverlayLayer(e.target.value);
       });
     }
@@ -356,6 +631,7 @@
     const fullLayerSelect = document.getElementById('fullscreen-map-layer-select');
     if (fullLayerSelect) {
       fullLayerSelect.addEventListener('change', (e) => {
+        syncLayerSelects(e.target.value);
         updateMapOverlayLayer(e.target.value);
       });
     }
@@ -363,8 +639,19 @@
     const desktopLayerSelect = document.getElementById('desktop-map-layer-select');
     if (desktopLayerSelect) {
       desktopLayerSelect.addEventListener('change', (e) => {
+        syncLayerSelects(e.target.value);
         updateMapOverlayLayer(e.target.value);
       });
+    }
+
+    // Nowcast Prediction Toggles (Desktop & Fullscreen)
+    const btnToggleNowcast = document.getElementById('btn-toggle-nowcast');
+    if (btnToggleNowcast) {
+      btnToggleNowcast.addEventListener('click', toggleNowcastMode);
+    }
+    const btnFullToggleNowcast = document.getElementById('btn-full-toggle-nowcast');
+    if (btnFullToggleNowcast) {
+      btnFullToggleNowcast.addEventListener('click', toggleNowcastMode);
     }
 
     // Radar Play/Pause Buttons
@@ -377,24 +664,82 @@
     updateMapOverlayLayer(initialLayer);
   }
 
+  function syncLayerSelects(val) {
+    const s1 = document.getElementById('home-map-layer-select');
+    const s2 = document.getElementById('fullscreen-map-layer-select');
+    const s3 = document.getElementById('desktop-map-layer-select');
+    if (s1 && s1.value !== val) s1.value = val;
+    if (s2 && s2.value !== val) s2.value = val;
+    if (s3 && s3.value !== val) s3.value = val;
+  }
+
+  function updateDbzScaleBarVisibility(layerType) {
+    const isRadarActive = layerType === 'radar' || layerType === 'hybrid';
+    const deskDbz = document.getElementById('desktop-radar-dbz-bar');
+    const fullDbz = document.getElementById('fullscreen-radar-dbz-bar');
+    if (deskDbz) deskDbz.style.display = isRadarActive ? 'flex' : 'none';
+    if (fullDbz) fullDbz.style.display = isRadarActive ? 'flex' : 'none';
+
+    const labelText = state.isNowcastActive ? 'Nowcast +30m' : 'Live 0m';
+    const deskLabel = document.getElementById('desktop-dbz-nowcast-label');
+    const fullLabel = document.getElementById('full-dbz-nowcast-label');
+    if (deskLabel) {
+      deskLabel.textContent = labelText;
+      deskLabel.style.color = state.isNowcastActive ? '#F59E0B' : '#38BDF8';
+      deskLabel.style.borderColor = state.isNowcastActive ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.3)';
+    }
+    if (fullLabel) {
+      fullLabel.textContent = labelText;
+      fullLabel.style.color = state.isNowcastActive ? '#F59E0B' : '#38BDF8';
+      fullLabel.style.borderColor = state.isNowcastActive ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.3)';
+    }
+  }
+
+  function toggleNowcastMode() {
+    state.isNowcastActive = !state.isNowcastActive;
+    const btnDesk = document.getElementById('btn-toggle-nowcast');
+    const btnFull = document.getElementById('btn-full-toggle-nowcast');
+    const label = state.isNowcastActive ? '⏱️ Nowcast +30m' : '🟢 Live 0m';
+
+    if (btnDesk) {
+      btnDesk.textContent = label;
+      btnDesk.classList.toggle('nowcast-active', state.isNowcastActive);
+    }
+    if (btnFull) {
+      btnFull.textContent = label;
+      btnFull.classList.toggle('nowcast-active', state.isNowcastActive);
+    }
+
+    updateDbzScaleBarVisibility(state.activeLayerType);
+
+    if (state.activeLayerType === 'radar' || state.activeLayerType === 'hybrid') {
+      applyRadarOverlay();
+    }
+  }
+
   async function fetchRainViewerRadarTimestamps() {
     try {
       const res = await fetch(`/api/radar/nowcast?lat=${state.lat}&lon=${state.lon}`);
       if (res.ok) {
         const data = await res.json();
+        state.latestLiveTileUrl = data.latest_live_tile_url || '';
+        state.nowcast30mTileUrl = data.nowcast_30m_tile_url || '';
+
         const frames = [...(data.past_frames || []), ...(data.nowcast_frames || [])];
         if (frames.length > 0) {
           state.radarTimestamps = frames.map((f) => f.path);
           state.currentRadarIndex = (data.past_frames && data.past_frames.length > 0) ? data.past_frames.length - 1 : 0;
-          const deskSel = document.getElementById('desktop-map-layer-select');
-          if (deskSel && deskSel.value === 'radar') {
-            applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
-          }
-          return;
         }
+
+        const deskSel = document.getElementById('desktop-map-layer-select');
+        const currentMode = (deskSel && deskSel.value) || state.activeLayerType;
+        if (currentMode === 'radar' || currentMode === 'hybrid') {
+          applyRadarOverlay();
+        }
+        return;
       }
     } catch (err) {
-      // Fallback to direct RainViewer
+      console.warn('Radar nowcast endpoint fetch failed, falling back:', err);
     }
 
     try {
@@ -405,7 +750,7 @@
       if (data.radar && data.radar.past && data.radar.past.length > 0) {
         state.radarTimestamps = data.radar.past.map((item) => item.path);
         state.currentRadarIndex = state.radarTimestamps.length - 1;
-        applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
+        applyRadarOverlay();
       }
     } catch (err) {
       console.log('Using synthetic Doppler overlay fallback:', err.message);
@@ -413,32 +758,79 @@
     }
   }
 
-  function applyRadarOverlay(path) {
-    if (!path) return;
-    const radarTileUrl = `https://tilecache.rainviewer.com/v2/radar/${path}/256/{z}/{x}/{y}/2/1_1.png`;
+  function applyRadarOverlay(pathOrUrl) {
+    let radarTileUrl = pathOrUrl;
+    if (!radarTileUrl) {
+      if (state.isNowcastActive && state.nowcast30mTileUrl) {
+        radarTileUrl = state.nowcast30mTileUrl;
+      } else if (state.latestLiveTileUrl) {
+        radarTileUrl = state.latestLiveTileUrl;
+      } else if (state.radarTimestamps && state.radarTimestamps.length > 0) {
+        const rawPath = state.radarTimestamps[state.currentRadarIndex];
+        const cleanPath = (rawPath && rawPath.startsWith('/')) ? rawPath : `/${rawPath || ''}`;
+        radarTileUrl = `https://tilecache.rainviewer.com${cleanPath}/256/{z}/{x}/{y}/2/1_1.png`;
+      }
+    }
+
+    if (!radarTileUrl) return;
+
+    const radarOpacity = state.activeLayerType === 'hybrid' ? 0.85 : 0.80;
 
     if (homeMiniMap) {
-      if (miniRadarLayer) homeMiniMap.removeLayer(miniRadarLayer);
-      miniRadarLayer = L.tileLayer(radarTileUrl, { opacity: 0.65, zIndex: 100 }).addTo(homeMiniMap);
+      if (miniRadarLayer) {
+        homeMiniMap.removeLayer(miniRadarLayer);
+        miniRadarLayer = null;
+      }
     }
 
     if (fullMap) {
       if (fullRadarLayer) fullMap.removeLayer(fullRadarLayer);
-      fullRadarLayer = L.tileLayer(radarTileUrl, { opacity: 0.7, zIndex: 100 }).addTo(fullMap);
+      fullRadarLayer = L.tileLayer(radarTileUrl, {
+        opacity: radarOpacity,
+        maxNativeZoom: 7,
+        maxZoom: 18,
+        zIndex: 100,
+      }).addTo(fullMap);
     }
 
     if (desktopMap) {
       if (desktopRadarLayer) desktopMap.removeLayer(desktopRadarLayer);
-      desktopRadarLayer = L.tileLayer(radarTileUrl, { opacity: 0.7, zIndex: 100 }).addTo(desktopMap);
+      desktopRadarLayer = L.tileLayer(radarTileUrl, {
+        opacity: radarOpacity,
+        maxNativeZoom: 7,
+        maxZoom: 18,
+        zIndex: 100,
+      }).addTo(desktopMap);
     }
 
     // Update timestamp labels
     const now = new Date();
-    const timeText = `Doppler Radar • Live (${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const modePrefix = state.activeLayerType === 'hybrid' ? 'Hybrid (INSAT-3DS + DWR Radar)' : 'Doppler Radar (DWR)';
+    const nowcastSuffix = state.isNowcastActive ? '⏱️ +30m Rain Nowcast' : `Live (${timeStr})`;
+    const timeText = `${modePrefix} • ${nowcastSuffix}`;
+
     const tsLabel = document.getElementById('radar-timestamp-label');
     if (tsLabel) tsLabel.textContent = timeText;
     const desktopTsLabel = document.getElementById('desktop-timestamp-label');
     if (desktopTsLabel) desktopTsLabel.textContent = timeText;
+
+    updateMapTelemetryBadge();
+  }
+
+  function removeRadarOverlay() {
+    if (desktopMap && desktopRadarLayer) {
+      desktopMap.removeLayer(desktopRadarLayer);
+      desktopRadarLayer = null;
+    }
+    if (fullMap && fullRadarLayer) {
+      fullMap.removeLayer(fullRadarLayer);
+      fullRadarLayer = null;
+    }
+    if (homeMiniMap && miniRadarLayer) {
+      homeMiniMap.removeLayer(miniRadarLayer);
+      miniRadarLayer = null;
+    }
   }
 
   function applySyntheticPrecipitationOverlay() {
@@ -501,24 +893,48 @@
   }
 
   function updateMapOverlayLayer(layerType) {
+    state.activeLayerType = layerType;
     const desktopSatControls = document.getElementById('desktop-sat-controls');
     const fullSatControls = document.getElementById('fullscreen-sat-controls');
 
+    updateDbzScaleBarVisibility(layerType);
+
     if (layerType === 'satellite') {
+      removeRadarOverlay();
+      if (homeCloudEngine) homeCloudEngine.stop();
+      if (desktopCloudEngine) desktopCloudEngine.stop();
+      if (fullCloudEngine) fullCloudEngine.stop();
       applySatelliteOverlay(currentSatChannel, currentSatOpacity);
       if (desktopSatControls) desktopSatControls.style.display = 'flex';
       if (fullSatControls) fullSatControls.style.display = 'flex';
-    } else {
+    } else if (layerType === 'radar') {
       removeSatelliteOverlay();
+      applyRadarOverlay();
+      if (homeCloudEngine) homeCloudEngine.start();
+      if (desktopCloudEngine) desktopCloudEngine.start();
+      if (fullCloudEngine) fullCloudEngine.start();
+      if (desktopSatControls) desktopSatControls.style.display = 'flex';
+      if (fullSatControls) fullSatControls.style.display = 'flex';
+    } else if (layerType === 'hybrid') {
+      // 45% satellite clouds base + 85% radar reflectivity overlay + continuous procedural cloud flow
+      applySatelliteOverlay(currentSatChannel, 0.45);
+      applyRadarOverlay();
+      if (homeCloudEngine) homeCloudEngine.start();
+      if (desktopCloudEngine) desktopCloudEngine.start();
+      if (fullCloudEngine) fullCloudEngine.start();
+      if (desktopSatControls) desktopSatControls.style.display = 'flex';
+      if (fullSatControls) fullSatControls.style.display = 'flex';
+    } else if (layerType === 'wind') {
+      removeSatelliteOverlay();
+      removeRadarOverlay();
+      if (homeCloudEngine) homeCloudEngine.stop();
+      if (desktopCloudEngine) desktopCloudEngine.stop();
+      if (fullCloudEngine) fullCloudEngine.stop();
       if (desktopSatControls) desktopSatControls.style.display = 'none';
       if (fullSatControls) fullSatControls.style.display = 'none';
-
-      if (layerType === 'radar') {
-        if (state.radarTimestamps && state.radarTimestamps.length > 0) {
-          applyRadarOverlay(state.radarTimestamps[state.currentRadarIndex]);
-        }
-      }
     }
+
+    updateMapTelemetryBadge();
   }
 
   function applySatelliteOverlay(channel = currentSatChannel, opacity = currentSatOpacity) {
@@ -589,11 +1005,15 @@
     }
 
     if (rainEl) {
-      let precipPct = 39;
-      if (state.currentWeather && state.currentWeather.nowcast_3h && state.currentWeather.nowcast_3h.length > 0) {
-        precipPct = state.currentWeather.nowcast_3h[0].rain_prob_pct;
+      if (state.activeLayerType === 'radar' || state.activeLayerType === 'hybrid') {
+        rainEl.textContent = state.isNowcastActive ? 'DWR +30m' : 'DWR Live';
+      } else {
+        let precipPct = 39;
+        if (state.currentWeather && state.currentWeather.nowcast_3h && state.currentWeather.nowcast_3h.length > 0) {
+          precipPct = state.currentWeather.nowcast_3h[0].rain_prob_pct;
+        }
+        rainEl.textContent = `${precipPct}% Nowcast`;
       }
-      rainEl.textContent = `${precipPct}% Nowcast`;
     }
   }
 
@@ -1184,16 +1604,28 @@
             loadLiveWeatherData();
             if (homeMiniMap) {
               homeMiniMap.setView([state.lat, state.lon], 9);
-              if (miniLocationMarker) miniLocationMarker.setLatLng([state.lat, state.lon]);
+              if (miniLocationMarker) {
+                miniLocationMarker.setLatLng([state.lat, state.lon]);
+                miniLocationMarker.setIcon(createReferenceLocationIcon(state.city));
+              }
             }
             if (fullMap) {
               fullMap.setView([state.lat, state.lon], 9);
-              if (fullLocationMarker) fullLocationMarker.setLatLng([state.lat, state.lon]);
+              if (fullLocationMarker) {
+                fullLocationMarker.setLatLng([state.lat, state.lon]);
+                fullLocationMarker.setIcon(createReferenceLocationIcon(state.city));
+              }
             }
             if (desktopMap) {
               desktopMap.setView([state.lat, state.lon], 9);
-              if (desktopLocationMarker) desktopLocationMarker.setLatLng([state.lat, state.lon]);
+              if (desktopLocationMarker) {
+                desktopLocationMarker.setLatLng([state.lat, state.lon]);
+                desktopLocationMarker.setIcon(createReferenceLocationIcon(state.city));
+              }
             }
+            if (homeCloudEngine) homeCloudEngine.reanchor(state.lat, state.lon);
+            if (desktopCloudEngine) desktopCloudEngine.reanchor(state.lat, state.lon);
+            if (fullCloudEngine) fullCloudEngine.reanchor(state.lat, state.lon);
           },
           (err) => {
             alert(`GPS acquisition failed: ${err.message}. Please pick your city from the list.`);
@@ -1229,16 +1661,28 @@
         loadLiveWeatherData();
         if (homeMiniMap) {
           homeMiniMap.setView([state.lat, state.lon], 8);
-          if (miniLocationMarker) miniLocationMarker.setLatLng([state.lat, state.lon]);
+          if (miniLocationMarker) {
+            miniLocationMarker.setLatLng([state.lat, state.lon]);
+            miniLocationMarker.setIcon(createReferenceLocationIcon(state.city));
+          }
         }
         if (fullMap) {
           fullMap.setView([state.lat, state.lon], 9);
-          if (fullLocationMarker) fullLocationMarker.setLatLng([state.lat, state.lon]);
+          if (fullLocationMarker) {
+            fullLocationMarker.setLatLng([state.lat, state.lon]);
+            fullLocationMarker.setIcon(createReferenceLocationIcon(state.city));
+          }
         }
         if (desktopMap) {
           desktopMap.setView([state.lat, state.lon], 8);
-          if (desktopLocationMarker) desktopLocationMarker.setLatLng([state.lat, state.lon]);
+          if (desktopLocationMarker) {
+            desktopLocationMarker.setLatLng([state.lat, state.lon]);
+            desktopLocationMarker.setIcon(createReferenceLocationIcon(state.city));
+          }
         }
+        if (homeCloudEngine) homeCloudEngine.reanchor(state.lat, state.lon);
+        if (desktopCloudEngine) desktopCloudEngine.reanchor(state.lat, state.lon);
+        if (fullCloudEngine) fullCloudEngine.reanchor(state.lat, state.lon);
       });
     });
 

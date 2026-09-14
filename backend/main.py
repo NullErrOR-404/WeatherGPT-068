@@ -172,7 +172,7 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
         "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
         "font-src 'self' https://fonts.gstatic.com data:; "
-        "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://mausam.imd.gov.in https://*.basemaps.cartocdn.com https://*.rainviewer.com https://tilecache.rainviewer.com; "
+        "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://mausam.imd.gov.in https://*.basemaps.cartocdn.com https://*.rainviewer.com https://tilecache.rainviewer.com https://*.arcgisonline.com https://server.arcgisonline.com; "
         "connect-src 'self' ws: wss: https://api.open-meteo.com https://archive-api.open-meteo.com https://api.rainviewer.com https://tilecache.rainviewer.com; "
         "media-src 'self' blob: data:"
     )

@@ -145,10 +145,26 @@ class SatelliteService:
                     nowcast_frames = data.get("radar", {}).get("nowcast", [])
                     host = data.get("host", "https://tilecache.rainviewer.com")
 
+                    latest_live_path = past_frames[-1]["path"] if past_frames else (nowcast_frames[0]["path"] if nowcast_frames else "")
+                    latest_live_tile_url = f"{host}{latest_live_path}/256/{{z}}/{{x}}/{{y}}/2/1_1.png" if latest_live_path else ""
+
+                    nowcast_30m_path = ""
+                    if nowcast_frames:
+                        idx = min(2, len(nowcast_frames) - 1)
+                        nowcast_30m_path = nowcast_frames[idx]["path"]
+                    elif past_frames:
+                        nowcast_30m_path = past_frames[-1]["path"]
+                    nowcast_30m_tile_url = f"{host}{nowcast_30m_path}/256/{{z}}/{{x}}/{{y}}/2/1_1.png" if nowcast_30m_path else ""
+
                     result = {
                         "host": host,
                         "generated_epoch": data.get("generated", int(now)),
                         "frames_count": len(past_frames) + len(nowcast_frames),
+                        "latest_live_path": latest_live_path,
+                        "latest_live_tile_url": latest_live_tile_url,
+                        "nowcast_30m_path": nowcast_30m_path,
+                        "nowcast_30m_tile_url": nowcast_30m_tile_url,
+                        "color_scheme": 2,
                         "past_frames": [
                             {
                                 "path": f["path"],
@@ -176,10 +192,16 @@ class SatelliteService:
             pass
 
         # Fallback synthetic radar timestamps if network unavailable
+        fallback_path = f"/v2/radar/{int(now)}"
         return {
             "host": "https://tilecache.rainviewer.com",
             "generated_epoch": int(now),
-            "frames_count": 0,
+            "frames_count": 1,
+            "latest_live_path": fallback_path,
+            "latest_live_tile_url": f"https://tilecache.rainviewer.com{fallback_path}/256/{{z}}/{{x}}/{{y}}/2/1_1.png",
+            "nowcast_30m_path": fallback_path,
+            "nowcast_30m_tile_url": f"https://tilecache.rainviewer.com{fallback_path}/256/{{z}}/{{x}}/{{y}}/2/1_1.png",
+            "color_scheme": 2,
             "past_frames": [],
             "nowcast_frames": [],
             "data_provenance": "Synthetic Doppler Simulation (Offline Mode)",

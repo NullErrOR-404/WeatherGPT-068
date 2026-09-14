@@ -13,7 +13,7 @@
   <!-- Leaflet Map CSS (Local Self-Contained) -->
   <link rel="stylesheet" href="/leaflet.css">
   <!-- Core App Stylesheet -->
-  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/app.css?v=20260914_flow_v4">
 </head>
 <body>
 
@@ -289,8 +289,9 @@
                 </div>
                 <div class="desktop-layer-controls">
                   <select id="desktop-map-layer-select" class="layer-select" aria-label="Select Radar Layer">
-                    <option value="radar">🌧️ Rainfall Radar ▾</option>
-                    <option value="satellite" selected>🛰️ INSAT-3DS Satellite Clouds (Live Overlay) ▾</option>
+                    <option value="radar" selected>🌧️ Doppler Weather Radar (DWR) ▾</option>
+                    <option value="satellite">🛰️ INSAT-3DS Satellite Clouds (Live Overlay) ▾</option>
+                    <option value="hybrid">⚡ Hybrid (Clouds + Radar Reflectivity) ▾</option>
                     <option value="wind">💨 Wind Flow ▾</option>
                   </select>
                 </div>
@@ -307,6 +308,7 @@
                   <button class="sat-preset-btn" id="btn-view-south-india" title="Focus view on South India">📍 South India</button>
                   <button class="sat-preset-btn" id="btn-view-all-india" title="Zoom out to entire Indian Subcontinent">🇮🇳 All India</button>
                   <button class="sat-preset-btn sat-wind-toggle active" id="btn-toggle-wind-vector" title="Toggle Live Wind Vector & Direction Compass">💨 Wind Vector: ON</button>
+                  <button class="sat-preset-btn sat-nowcast-toggle" id="btn-toggle-nowcast" title="Toggle between Live (0m) and Doppler Nowcast (+30m) rain projection">🟢 Live 0m</button>
                 </div>
                 <div class="sat-opacity-control">
                   <span class="sat-opacity-label">Opacity: <strong id="sat-opacity-val">65%</strong></span>
@@ -339,6 +341,27 @@
                       <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M8 19v2m4-2v2m4-2v2"/>
                     </svg>
                     <span class="telemetry-val" id="desk-telemetry-rain">39% Nowcast</span>
+                  </div>
+                </div>
+
+                <!-- Glassmorphic Horizontal dBZ Rain Intensity Scale Bar (Pinned Bottom-Right) -->
+                <div class="radar-dbz-scale-bar" id="desktop-radar-dbz-bar" style="display: none;" aria-label="Doppler Radar Reflectivity Scale">
+                  <div class="dbz-header">
+                    <span class="dbz-title"><span class="dbz-pulse"></span> RAIN RATE (dBZ)</span>
+                    <span class="dbz-indicator" id="desktop-dbz-nowcast-label">Live 0m</span>
+                  </div>
+                  <div class="dbz-gradient-track" role="img" aria-label="dBZ Gradient Scale: 10 to 65 dBZ">
+                    <span class="dbz-stop s1" title="&lt; 15 dBZ: Drizzle (&lt; 0.5 mm/h)"></span>
+                    <span class="dbz-stop s2" title="15–30 dBZ: Light Rain (0.5–2.5 mm/h)"></span>
+                    <span class="dbz-stop s3" title="30–45 dBZ: Moderate Rain (2.5–10 mm/h)"></span>
+                    <span class="dbz-stop s4" title="45–55 dBZ: Heavy Rain (10–50 mm/h)"></span>
+                    <span class="dbz-stop s5" title="&gt; 55 dBZ: Extreme / Hail / Cloudburst (&gt; 50 mm/h)"></span>
+                  </div>
+                  <div class="dbz-ticks">
+                    <span>15</span>
+                    <span>30</span>
+                    <span>45</span>
+                    <span>60+</span>
                   </div>
                 </div>
                 
@@ -374,9 +397,10 @@
           <h2 class="tab-page-title">Live Satellite &amp; Radar</h2>
           <div class="tab-header-controls">
             <select id="fullscreen-map-layer-select" class="layer-select-sm" aria-label="Select Map Layer">
-              <option value="radar" selected>Rainfall Radar</option>
-              <option value="satellite">Satellite Clouds</option>
-              <option value="wind">Wind Streams</option>
+              <option value="satellite">🛰️ Satellite Clouds</option>
+              <option value="radar" selected>🌧️ Rainfall Radar (DWR)</option>
+              <option value="hybrid">⚡ Hybrid (Clouds + Radar)</option>
+              <option value="wind">💨 Wind Streams</option>
             </select>
           </div>
         </header>
@@ -392,6 +416,7 @@
               <button class="sat-preset-btn" id="btn-full-south-india" title="Focus view on South India">📍 South India</button>
               <button class="sat-preset-btn" id="btn-full-all-india" title="Zoom out to all of India">🇮🇳 All India</button>
               <button class="sat-preset-btn sat-wind-toggle active" id="btn-full-toggle-wind-vector" title="Toggle Live Wind Vector & Direction Compass">💨 Wind Vector: ON</button>
+              <button class="sat-preset-btn sat-nowcast-toggle" id="btn-full-toggle-nowcast" title="Toggle between Live (0m) and Doppler Nowcast (+30m)">🟢 Live 0m</button>
             </div>
             <div class="sat-opacity-control">
               <span class="sat-opacity-label">Opacity: <strong id="full-sat-opacity-val">65%</strong></span>
@@ -400,6 +425,28 @@
           </div>
 
           <div id="fullscreen-map-canvas" class="fullscreen-map-canvas"></div>
+
+          <!-- Glassmorphic Horizontal dBZ Rain Intensity Scale Bar (Fullscreen Map) -->
+          <div class="radar-dbz-scale-bar" id="fullscreen-radar-dbz-bar" style="display: none;" aria-label="Doppler Radar Reflectivity Scale">
+            <div class="dbz-header">
+              <span class="dbz-title"><span class="dbz-pulse"></span> RAIN RATE (dBZ)</span>
+              <span class="dbz-indicator" id="full-dbz-nowcast-label">Live 0m</span>
+            </div>
+            <div class="dbz-gradient-track" role="img" aria-label="dBZ Gradient Scale: 10 to 65 dBZ">
+              <span class="dbz-stop s1" title="&lt; 15 dBZ: Drizzle (&lt; 0.5 mm/h)"></span>
+              <span class="dbz-stop s2" title="15–30 dBZ: Light Rain (0.5–2.5 mm/h)"></span>
+              <span class="dbz-stop s3" title="30–45 dBZ: Moderate Rain (2.5–10 mm/h)"></span>
+              <span class="dbz-stop s4" title="45–55 dBZ: Heavy Rain (10–50 mm/h)"></span>
+              <span class="dbz-stop s5" title="&gt; 55 dBZ: Extreme / Hail / Cloudburst (&gt; 50 mm/h)"></span>
+            </div>
+            <div class="dbz-ticks">
+              <span>15</span>
+              <span>30</span>
+              <span>45</span>
+              <span>60+</span>
+            </div>
+          </div>
+
           <div class="desktop-map-footer-toolbar fullscreen-footer-toolbar">
             <div class="map-live-status-pill">
               <span class="live-status-dot"></span>
@@ -787,6 +834,6 @@
   <!-- Leaflet Map JS (Local Self-Contained) -->
   <script src="/leaflet.js"></script>
   <!-- Core Application Logic -->
-  <script src="/app.js"></script>
+  <script src="/app.js?v=20260914_flow_v4"></script>
 </body>
 </html>
