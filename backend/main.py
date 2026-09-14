@@ -60,6 +60,8 @@ from .services.prithvi_mesh_service import (
 from .services.aapda_mitra_service import aapda_mitra_service, AapdaMitraService
 from .services.satellite_service import satellite_service
 from .services.fishermen_voyage_service import fishermen_voyage_service
+from .services.unhdp_service import unhdp_service
+from .models.schemas import UNHDPFeedResponse
 
 
 def run_security_preflight_check():
@@ -581,6 +583,21 @@ async def get_radar_nowcast(
     with low-latency 2-minute memory caching.
     """
     return await satellite_service.get_radar_nowcast(lat, lon)
+
+
+@app.get("/api/unhdp/feed", response_model=UNHDPFeedResponse)
+async def get_unhdp_feed(
+    lat: float = Query(13.0827, ge=-90.0, le=90.0, description="Latitude"),
+    lon: float = Query(80.2707, ge=-180.0, le=180.0, description="Longitude"),
+    agency: str = Query("all", description="Agency filter: all, imd, incois, cwc, ndma, isro"),
+):
+    """
+    Unified National Hydro-Meteorological Protocol (UNH-DP) Sovereign Feed.
+    Aggregates canonical observations, buoys, river gauges, CAP disaster bulletins, and satellite statuses
+    from IMD, INCOIS, CWC, NDMA, and ISRO into a single high-throughput GeoJSON contract.
+    """
+    return unhdp_service.get_unified_feed(lat=lat, lon=lon, agency=agency)
+
 
 
 # Mount static frontend directory

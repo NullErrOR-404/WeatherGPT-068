@@ -4,6 +4,7 @@ Single source of truth for all API contracts and data serialization.
 """
 
 from typing import List, Optional, Dict, Any
+from enum import Enum
 from pydantic import BaseModel, Field
 
 
@@ -285,3 +286,58 @@ class USSDSessionResponse(BaseModel):
     ussd_menu_text: str
     character_count: int
     fits_standard_ussd_pdu: bool
+
+
+# =============================================================================
+# Unified National Hydro-Meteorological Protocol (UNH-DP) Data Contracts
+# Unifying IMD, INCOIS, CWC, NDMA SACHET, and ISRO MOSDAC into canonical GeoJSON
+# =============================================================================
+
+class AgencyProvenance(str, Enum):
+    IMD = "IMD"
+    INCOIS = "INCOIS"
+    CWC = "CWC"
+    NDMA = "NDMA"
+    ISRO = "ISRO"
+
+
+class UNHDPCategory(str, Enum):
+    METEOROLOGICAL = "METEOROLOGICAL"
+    OCEAN_MARINE = "OCEAN_MARINE"
+    HYDROLOGICAL_RIVER = "HYDROLOGICAL_RIVER"
+    DISASTER_CAP = "DISASTER_CAP"
+    EARTH_OBSERVATION = "EARTH_OBSERVATION"
+
+
+class UNHDPFeature(BaseModel):
+    id: str
+    agency: str
+    agency_name: str
+    category: str
+    severity: str  # "SAFE", "WATCH", "ALERT", "WARNING"
+    title: str
+    latitude: float
+    longitude: float
+    metrics: Dict[str, Any]
+    citizen_advisory: str
+    official_bulletin_url: str
+    valid_until: float
+    timestamp: float
+
+
+class UNHDPAgencySyncStatus(BaseModel):
+    agency: str
+    agency_name: str
+    status: str  # "HEALTHY", "DEGRADED", "OFFLINE"
+    last_sync_ist: str
+    records_count: int
+
+
+class UNHDPFeedResponse(BaseModel):
+    status: str
+    total_features: int
+    agencies_synced: List[UNHDPAgencySyncStatus]
+    features: List[UNHDPFeature]
+    geohash: str
+    timestamp: float
+
